@@ -7,7 +7,6 @@ const authMiddleware = {
   // Verify JWT token
   authenticateToken: async (req, res, next) => {
     try {
-      // Get token from Authorization header
       const authHeader = req.headers.authorization;
       const token = jwtUtils.extractToken(authHeader);
 
@@ -15,22 +14,30 @@ const authMiddleware = {
         throw createError(401, "Access token is required");
       }
 
-      // Verify token
       const decoded = jwtUtils.verifyToken(token);
-
-      // Check if user exists
       const user = await userModel.findById(decoded.userId);
 
       if (!user) {
         throw createError(401, "User not found");
       }
 
-      // Check if email is verified (optional, based on requirements)
+      // 🔥 Allow /auth/profile even if NOT verified
+      if (req.originalUrl.includes("/api/auth/profile")) {
+        req.user = {
+          id: user.id,
+          email: user.email,
+          is_email_verified: user.is_email_verified,
+          is_mobile_verified: user.is_mobile_verified,
+        };
+        return next();
+      }
+
+      // ❌ Block other routes until verified
       if (!user.is_email_verified) {
         throw createError(403, "Please verify your email first");
       }
 
-      // Attach user to request object
+      // Normal attach user
       req.user = {
         id: user.id,
         email: user.email,
@@ -41,34 +48,6 @@ const authMiddleware = {
       next();
     } catch (error) {
       logger.error("Auth middleware error:", error.message);
-
-      if (error.status === 401 || error.status === 403) {
-        next(error);
-      } else {
-        next(createError(401, "Invalid or expired token"));
-      }
-    }
-  },
-
-  // Check if user is verified (both email and mobile)
-  requireVerifiedUser: async (req, res, next) => {
-    try {
-      if (!req.user) {
-        throw createError(401, "Authentication required");
-      }
-
-      // Check both verifications
-      if (!req.user.is_email_verified) {
-        throw createError(403, "Email verification required");
-      }
-
-      if (!req.user.is_mobile_verified) {
-        throw createError(403, "Mobile verification required");
-      }
-
-      next();
-    } catch (error) {
-      logger.error("Require verified user error:", error.message);
       next(error);
     }
   },

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Grid,
@@ -26,9 +26,6 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import { ROUTES } from '../utils/constants';
 import { formatDate, formatGender, getInitials } from '../utils/formatters';
 
-/**
- * Dashboard Page
- */
 const Dashboard = () => {
   const navigate = useNavigate();
   const user = useSelector(selectUser);
@@ -81,10 +78,12 @@ const Dashboard = () => {
                 Please complete verification to access all features.
               </Typography>
             </Box>
+
+            {/* Important: NO redirect loop! Only navigate on click */}
             <Button
               variant="outlined"
               size="small"
-              onClick={() => navigate(ROUTES.SETTINGS)}
+              onClick={() => navigate(ROUTES.VERIFY_ACCOUNT)}
             >
               Verify Now
             </Button>
@@ -116,6 +115,7 @@ const Dashboard = () => {
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   {user.email}
                 </Typography>
+
                 <Button
                   variant="outlined"
                   size="small"
@@ -158,20 +158,18 @@ const Dashboard = () => {
                   <Typography variant="caption" color="text.secondary">
                     Email Status
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip
-                      label={verificationStatus.email ? 'Verified' : 'Not Verified'}
-                      size="small"
-                      color={verificationStatus.email ? 'success' : 'warning'}
-                      icon={
-                        verificationStatus.email ? (
-                          <VerifiedIcon />
-                        ) : (
-                          <WarningIcon />
-                        )
-                      }
-                    />
-                  </Box>
+                  <Chip
+                    label={verificationStatus.email ? 'Verified' : 'Not Verified'}
+                    size="small"
+                    color={verificationStatus.email ? 'success' : 'warning'}
+                    icon={
+                      verificationStatus.email ? (
+                        <VerifiedIcon />
+                      ) : (
+                        <WarningIcon />
+                      )
+                    }
+                  />
                 </Box>
 
                 <Box>
@@ -193,18 +191,18 @@ const Dashboard = () => {
             <ProfileCard
               company={company}
               onEdit={() => navigate(ROUTES.SETTINGS)}
-              editable={true}
+              editable
             />
           ) : (
             <Card>
               <CardContent>
                 <Box sx={{ textAlign: 'center', py: 6 }}>
-                  <BusinessIcon
-                    sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }}
-                  />
+                  <BusinessIcon sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
+
                   <Typography variant="h5" fontWeight={600} gutterBottom>
                     No Company Profile
                   </Typography>
+
                   <Typography
                     variant="body1"
                     color="text.secondary"
@@ -214,6 +212,7 @@ const Dashboard = () => {
                     Create your company profile to showcase your business,
                     connect with partners, and access premium features.
                   </Typography>
+
                   <Button
                     variant="contained"
                     size="large"
@@ -232,97 +231,50 @@ const Dashboard = () => {
         {/* Quick Stats */}
         <Grid item xs={12}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar sx={{ backgroundColor: 'primary.main' }}>
-                      <PersonIcon />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight={600}>
-                        Profile
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {allVerified ? 'Complete' : 'Incomplete'}
-                      </Typography>
+            {[
+              {
+                label: 'Profile',
+                value: allVerified ? 'Complete' : 'Incomplete',
+                icon: <PersonIcon />,
+                color: 'primary.main',
+              },
+              {
+                label: 'Company',
+                value: hasCompany ? 'Registered' : 'Not Registered',
+                icon: <BusinessIcon />,
+                color: 'success.main',
+              },
+              {
+                label: 'Email',
+                value: verificationStatus.email ? 'Verified' : 'Pending',
+                icon: <VerifiedIcon />,
+                color: verificationStatus.email ? 'success.main' : 'warning.main',
+              },
+              {
+                label: 'Mobile',
+                value: verificationStatus.mobile ? 'Verified' : 'Pending',
+                icon: <VerifiedIcon />,
+                color: verificationStatus.mobile ? 'success.main' : 'warning.main',
+              },
+            ].map((item, idx) => (
+              <Grid key={idx} item xs={12} sm={6} md={3}>
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Avatar sx={{ backgroundColor: item.color }}>{item.icon}</Avatar>
+                      <Box>
+                        <Typography variant="h6" fontWeight={600}>
+                          {item.label}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {item.value}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar sx={{ backgroundColor: 'success.main' }}>
-                      <BusinessIcon />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight={600}>
-                        Company
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {hasCompany ? 'Registered' : 'Not Registered'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar
-                      sx={{
-                        backgroundColor: verificationStatus.email
-                          ? 'success.main'
-                          : 'warning.main',
-                      }}
-                    >
-                      <VerifiedIcon />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight={600}>
-                        Email
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {verificationStatus.email ? 'Verified' : 'Pending'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar
-                      sx={{
-                        backgroundColor: verificationStatus.mobile
-                          ? 'success.main'
-                          : 'warning.main',
-                      }}
-                    >
-                      <VerifiedIcon />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight={600}>
-                        Mobile
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {verificationStatus.mobile ? 'Verified' : 'Pending'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
         </Grid>
       </Grid>

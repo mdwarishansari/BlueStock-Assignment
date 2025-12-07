@@ -111,6 +111,7 @@ export const ROUTES = {
   SETTINGS: "/settings",
   PROFILE: "/profile",
   EMAIL_VERIFIED: "/email-verified",
+  VERIFY_ACCOUNT: "/verify-account",
   NOT_FOUND: "*",
 };
 

@@ -25,6 +25,7 @@ import Dashboard from './pages/Dashboard';
 import CompanyRegistration from './pages/CompanyRegistration';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
+import VerifyAccount from './pages/VerifyAccount';
 
 // Constants
 import { ROUTES, TOAST_CONFIG } from './utils/constants';
@@ -55,65 +56,77 @@ function App() {
                 {/* Public Routes */}
                 <Route path={ROUTES.LOGIN} element={<Login />} />
                 <Route path={ROUTES.REGISTER} element={<Register />} />
+
                 {/* Protected Routes */}
-            <Route
-              path={ROUTES.DASHBOARD}
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Dashboard />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
+                <Route
+                  path={ROUTES.DASHBOARD}
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <Dashboard />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
 
-            <Route
-              path={ROUTES.COMPANY_REGISTRATION}
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <CompanyRegistration />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
+                <Route
+                  path={ROUTES.VERIFY_ACCOUNT}
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <VerifyAccount />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
 
-            <Route
-              path={ROUTES.SETTINGS}
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Settings />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
+                <Route
+                  path={ROUTES.COMPANY_REGISTRATION}
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <CompanyRegistration />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
 
-            <Route
-              path={ROUTES.PROFILE}
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Profile />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
+                <Route
+                  path={ROUTES.SETTINGS}
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <Settings />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
 
-            {/* Redirect root to dashboard */}
-            <Route path="/" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
+                <Route
+                  path={ROUTES.PROFILE}
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <Profile />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
 
-            {/* 404 - Not Found */}
-            <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-          </Routes>
-        </BrowserRouter>
+                {/* Redirect root to dashboard */}
+                <Route path="/" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
 
-        {/* Toast Notifications */}
-        <ToastContainer {...TOAST_CONFIG} />
-      </ThemeProvider>
-    </QueryClientProvider>
-  </Provider>
-</ErrorBoundary>
+                {/* 404 - Not Found */}
+                <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
+              </Routes>
+            </BrowserRouter>
+
+            {/* Toast Notifications */}
+            <ToastContainer {...TOAST_CONFIG} />
+          </ThemeProvider>
+        </QueryClientProvider>
+      </Provider>
+    </ErrorBoundary>
   );
 }
 
