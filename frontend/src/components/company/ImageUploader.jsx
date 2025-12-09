@@ -131,6 +131,7 @@ const ImageUploader = ({
                 <IconButton
                   size="small"
                   onClick={handleClick}
+                  aria-label="change image"
                   sx={{
                     backgroundColor: 'rgba(255, 255, 255, 0.9)',
                     '&:hover': {
@@ -144,6 +145,7 @@ const ImageUploader = ({
                 <IconButton
                   size="small"
                   onClick={handleRemoveImage}
+                  aria-label="delete"
                   sx={{
                     backgroundColor: 'rgba(255, 255, 255, 0.9)',
                     '&:hover': {
@@ -182,8 +184,11 @@ const ImageUploader = ({
         )}
       </Paper>
 
-      {/* Hidden File Input */}
+            {/* Hidden File Input */}
       <input
+        id={`${type}-file-input`}
+        aria-label={`${label} file input`}
+
         ref={fileInputRef}
         type="file"
         accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -191,6 +196,14 @@ const ImageUploader = ({
         style={{ display: 'none' }}
         disabled={disabled}
       />
+
+      <label
+        htmlFor={`${type}-file-input`}
+        style={{ display: 'none' }}
+      >
+        {label}
+      </label>
+
 
       {!preview && !disabled && (
         <Button

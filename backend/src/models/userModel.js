@@ -251,4 +251,22 @@ const userModel = {
   },
 };
 
+// Update password
+  updatePassword: async (userId, hashedPassword) => {
+    try {
+      const sql = `
+        UPDATE users 
+        SET password = $1, updated_at = NOW()
+        WHERE id = $2
+        RETURNING id, email
+      `;
+
+      const result = await query(sql, [hashedPassword, userId]);
+      return result.rows[0];
+    } catch (error) {
+      logger.error("User model - updatePassword error:", error.message);
+      throw error;
+    }
+  },
+  
 module.exports = userModel;

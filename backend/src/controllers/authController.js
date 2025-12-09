@@ -17,19 +17,16 @@ const authController = {
         signup_type = "e",
       } = req.body;
 
-      // Check if email already exists
       const emailExists = await userModel.emailExists(email);
       if (emailExists) {
         throw createError(409, "Email already registered");
       }
 
-      // Check if mobile already exists
       const mobileExists = await userModel.mobileExists(mobile_no);
       if (mobileExists) {
         throw createError(409, "Mobile number already registered");
       }
 
-      // Create user in Firebase
       let firebaseUser;
       try {
         firebaseUser = await firebaseAuth.createUser(
@@ -41,7 +38,6 @@ const authController = {
       } catch (firebaseError) {
         logger.error("Firebase user creation failed:", firebaseError.message);
 
-        // Handle specific Firebase errors
         if (firebaseError.code === "auth/email-already-exists") {
           throw createError(409, "Email already exists in Firebase");
         }
@@ -58,7 +54,6 @@ const authController = {
         );
       }
 
-      // Create user in local database
       const userData = {
         email,
         password,
@@ -70,15 +65,12 @@ const authController = {
 
       const newUser = await userModel.createUser(userData);
 
-      // Send SMS OTP for mobile verification
       try {
         await firebaseAuth.sendSMSOTP(mobile_no);
       } catch (otpError) {
         logger.warn("Failed to send SMS OTP:", otpError.message);
-        // Don't fail registration if OTP sending fails
       }
 
-      // Prepare response
       const response = {
         success: true,
         message: "User registered successfully. Please verify mobile OTP.",
@@ -102,13 +94,11 @@ const authController = {
     try {
       const { email, password } = req.body;
 
-      // Find user by email
       const user = await userModel.findByEmail(email);
       if (!user) {
         throw createError(401, "Invalid email or password");
       }
 
-      // Verify password
       const isPasswordValid = await userModel.verifyPassword(
         password,
         user.password
@@ -117,12 +107,10 @@ const authController = {
         throw createError(401, "Invalid email or password");
       }
 
-      // In development mode, bypass email verification
       if (!user.is_email_verified && process.env.NODE_ENV !== "development") {
         throw createError(403, "Please verify your email before logging in");
       }
 
-      // Verify credentials with Firebase (for consistency)
       try {
         await firebaseAuth.verifyCredentials(email, password);
       } catch (firebaseError) {
@@ -130,13 +118,11 @@ const authController = {
           "Firebase credential verification failed:",
           firebaseError.message
         );
-        // Continue with local verification in development
         if (process.env.NODE_ENV !== "development") {
           throw createError(401, "Authentication service error");
         }
       }
 
-      // Generate JWT token
       const tokenPayload = {
         userId: user.id,
         email: user.email,
@@ -144,7 +130,6 @@ const authController = {
 
       const token = jwtUtils.generateToken(tokenPayload);
 
-      // Prepare user data for response (exclude password)
       const userData = {
         id: user.id,
         email: user.email,
@@ -156,7 +141,6 @@ const authController = {
         created_at: user.created_at,
       };
 
-      // Prepare response
       const response = {
         success: true,
         message: "Login successful",
@@ -178,13 +162,11 @@ const authController = {
     try {
       const { user_id, otp } = req.body;
 
-      // Find user
       const user = await userModel.findById(user_id);
       if (!user) {
         throw createError(404, "User not found");
       }
 
-      // Check if already verified
       if (user.is_mobile_verified) {
         return res.status(200).json({
           success: true,
@@ -193,22 +175,17 @@ const authController = {
         });
       }
 
-      // Verify OTP with Firebase
       try {
-        // In a real app, you'd use the verificationId from Firebase
-        // For now, we'll use a mock verification
         await firebaseAuth.verifySMSOTP("mock-verification-id", otp);
       } catch (otpError) {
         logger.error("OTP verification failed:", otpError.message);
         throw createError(400, "Invalid or expired OTP");
       }
 
-      // Update verification status in database
       await userModel.updateVerificationStatus(user_id, {
         is_mobile_verified: true,
       });
 
-      // Prepare response
       const response = {
         success: true,
         message: "Mobile number verified successfully",
@@ -225,29 +202,30 @@ const authController = {
     }
   },
 
-  // Verify email (callback from Firebase)
+  // Verify email
   verifyEmail: async (req, res, next) => {
-    // 🔥 DEVELOPMENT MODE SHORTCUT — NO TOKEN REQUIRED
-if (process.env.NODE_ENV === "development") {
-  const userId = req.query.user_id;
+    if (process.env.NODE_ENV === "development") {
+      const userId = req.query.user_id;
 
-  if (!userId) {
-    throw createError(400, "user_id is required in development mode");
-  }
+      if (!userId) {
+        throw createError(400, "user_id is required in development mode");
+      }
 
-  const user = await userModel.findById(userId);
-  if (!user) {
-    throw createError(404, "User not found");
-  }
+      const user = await userModel.findById(userId);
+      if (!user) {
+        throw createError(404, "User not found");
+      }
 
-  await userModel.updateVerificationStatus(userId, { is_email_verified: true });
+      await userModel.updateVerificationStatus(userId, {
+        is_email_verified: true,
+      });
 
-  return res.status(200).json({
-    success: true,
-    message: "Email verified (development mode)",
-    data: { user_id: userId, email: user.email }
-  });
-}
+      return res.status(200).json({
+        success: true,
+        message: "Email verified (development mode)",
+        data: { user_id: userId, email: user.email },
+      });
+    }
 
     try {
       const { token } = req.query;
@@ -256,16 +234,7 @@ if (process.env.NODE_ENV === "development") {
         throw createError(400, "Verification token is required");
       }
 
-      // In a real implementation, you would:
-      // 1. Verify the Firebase token
-      // 2. Extract email from token
-      // 3. Update user's email verification status
-
-      // For now, we'll simulate the process
-      // In production, you should implement proper Firebase token verification
-
-      // Mock response for development
-      const mockEmail = "user@example.com"; // This would come from token verification
+      const mockEmail = "user@example.com";
 
       const user = await userModel.findByEmail(mockEmail);
       if (!user) {
@@ -280,17 +249,13 @@ if (process.env.NODE_ENV === "development") {
         });
       }
 
-      // Update verification status
       await userModel.updateVerificationStatus(user.id, {
         is_email_verified: true,
       });
 
-      // Redirect to success page or return JSON
       if (req.accepts("html")) {
-        // Redirect to success page
         res.redirect(`${process.env.CLIENT_URL}/email-verified`);
       } else {
-        // Return JSON response
         res.status(200).json({
           success: true,
           message: "Email verified successfully",
@@ -312,14 +277,12 @@ if (process.env.NODE_ENV === "development") {
         throw createError(401, "Authentication required");
       }
 
-      // Get user with company details
       const userWithCompany = await userModel.getUserWithCompany(req.user.id);
 
       if (!userWithCompany) {
         throw createError(404, "User not found");
       }
 
-      // Prepare response data
       const userData = {
         id: userWithCompany.id,
         email: userWithCompany.email,
@@ -369,7 +332,7 @@ if (process.env.NODE_ENV === "development") {
     }
   },
 
-  // Update user profile
+  // Update profile
   updateProfile: async (req, res, next) => {
     try {
       if (!req.user) {
@@ -378,7 +341,6 @@ if (process.env.NODE_ENV === "development") {
 
       const { full_name, gender, mobile_no } = req.body;
 
-      // Check if mobile number is being changed and if it already exists
       if (mobile_no) {
         const user = await userModel.findById(req.user.id);
         if (user.mobile_no !== mobile_no) {
@@ -389,7 +351,6 @@ if (process.env.NODE_ENV === "development") {
         }
       }
 
-      // Update user profile
       const updateData = {};
       if (full_name !== undefined) updateData.full_name = full_name;
       if (gender !== undefined) updateData.gender = gender;
@@ -404,7 +365,6 @@ if (process.env.NODE_ENV === "development") {
         updateData
       );
 
-      // Prepare response
       const response = {
         success: true,
         message: "Profile updated successfully",
@@ -419,23 +379,20 @@ if (process.env.NODE_ENV === "development") {
     }
   },
 
-  // Resend OTP for mobile verification
+  // Resend OTP
   resendOTP: async (req, res, next) => {
     try {
       const { user_id } = req.body;
 
-      // Find user
       const user = await userModel.findById(user_id);
       if (!user) {
         throw createError(404, "User not found");
       }
 
-      // Check if already verified
       if (user.is_mobile_verified) {
         throw createError(400, "Mobile number already verified");
       }
 
-      // Resend SMS OTP
       try {
         await firebaseAuth.sendSMSOTP(user.mobile_no);
       } catch (otpError) {
@@ -443,35 +400,96 @@ if (process.env.NODE_ENV === "development") {
         throw createError(500, "Failed to send OTP");
       }
 
-      // Prepare response
-      const response = {
+      res.status(200).json({
         success: true,
         message: "OTP resent successfully",
         data: {
           user_id: user.id,
           mobile_no: user.mobile_no,
         },
-      };
-
-      res.status(200).json(response);
+      });
     } catch (error) {
       next(error);
     }
   },
 
-  // Logout (client-side operation, but we can invalidate token if needed)
+  // ---------------------------------------------------
+  // INSERTED: Request Password Reset
+  // ---------------------------------------------------
+  requestPasswordReset: async (req, res, next) => {
+    try {
+      const { email } = req.body;
+
+      const user = await userModel.findByEmail(email);
+      if (!user) {
+        return res.status(200).json({
+          success: true,
+          message: "If this email exists, a password reset link has been sent.",
+        });
+      }
+
+      if (process.env.NODE_ENV === "development") {
+        return res.status(200).json({
+          success: true,
+          message: "Password reset link (development mode). Check console.",
+          data: {
+            reset_link: `${process.env.CLIENT_URL}/reset-password?email=${email}`,
+          },
+        });
+      }
+
+      await firebaseAuth.sendPasswordResetEmail(email);
+
+      res.status(200).json({
+        success: true,
+        message: "Password reset link sent to email.",
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // ---------------------------------------------------
+  // INSERTED: Reset Password
+  // ---------------------------------------------------
+  resetPassword: async (req, res, next) => {
+    try {
+      const { email, new_password } = req.body;
+
+      const user = await userModel.findByEmail(email);
+      if (!user) {
+        throw createError(404, "User not found");
+      }
+
+      const bcrypt = require("bcrypt");
+      const hashedPassword = await bcrypt.hash(new_password, 10);
+
+      await userModel.updatePassword(user.id, hashedPassword);
+
+      try {
+        await firebaseAuth.updateUserPassword(email, new_password);
+      } catch (firebaseError) {
+        logger.warn("Firebase password update failed:", firebaseError.message);
+      }
+
+      res.status(200).json({
+        success: true,
+        message:
+          "Password reset successful. Please login with your new password.",
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Logout
   logout: async (req, res, next) => {
     try {
-      // In a stateless JWT system, logout is handled client-side
-      // But we can implement token blacklisting if needed
-
-      const response = {
+      res.status(200).json({
         success: true,
         message:
           "Logout successful. Please remove the token from client storage.",
-      };
-
-      res.status(200).json(response);
+      });
     } catch (error) {
       next(error);
     }

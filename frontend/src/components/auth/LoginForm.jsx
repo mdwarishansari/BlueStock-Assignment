@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import {
   Box,
   TextField,
@@ -21,6 +22,7 @@ import useAuth from '../../hooks/useAuth';
 import { validateEmail } from '../../utils/validators';
 import { ROUTES } from '../../utils/constants';
 import LoadingSpinner from '../common/LoadingSpinner';
+
 
 /**
  * Login Form Component
@@ -114,6 +116,7 @@ const LoginForm = () => {
             <TextField
               fullWidth
               label="Password"
+              inputProps={{ 'aria-label': 'password input' }}
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               placeholder="Enter your password"
@@ -132,6 +135,7 @@ const LoginForm = () => {
                       onClick={handleTogglePassword}
                       edge="end"
                       disabled={loading}
+                      aria-label="toggle password visibility"
                     >
                       {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                     </IconButton>
@@ -148,19 +152,21 @@ const LoginForm = () => {
             />
 
             {/* Forgot Password Link */}
-            <Box sx={{ textAlign: 'right' }}>
-              <Link
-                href="#"
-                variant="body2"
-                sx={{ textDecoration: 'none' }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  toast.info('Password reset feature coming soon!');
-                }}
-              >
-                Forgot Password?
-              </Link>
-            </Box>
+            
+<Box sx={{ textAlign: 'right' }}>
+  <Link
+    component="button"
+    type="button"
+    variant="body2"
+    sx={{ textDecoration: 'none' }}
+    onClick={(e) => {
+      e.preventDefault();
+      navigate(ROUTES.FORGOT_PASSWORD);
+    }}
+  >
+    Forgot Password?
+  </Link>
+</Box>
 
             {/* Submit Button */}
             <Button

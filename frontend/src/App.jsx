@@ -26,6 +26,8 @@ import CompanyRegistration from './pages/CompanyRegistration';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import VerifyAccount from './pages/VerifyAccount';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Constants
 import { ROUTES, TOAST_CONFIG } from './utils/constants';
@@ -56,6 +58,8 @@ function App() {
                 {/* Public Routes */}
                 <Route path={ROUTES.LOGIN} element={<Login />} />
                 <Route path={ROUTES.REGISTER} element={<Register />} />
+                <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
+                <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
 
                 {/* Protected Routes */}
                 <Route

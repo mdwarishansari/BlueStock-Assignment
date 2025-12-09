@@ -38,6 +38,21 @@ router.post(
 
 router.post("/resend-otp", authController.resendOTP);
 
+// Forgot password routes (added)
+router.post(
+  "/forgot-password",
+  validationRules.forgotPassword,
+  validate(validationRules.forgotPassword),
+  authController.requestPasswordReset
+);
+
+router.post(
+  "/reset-password",
+  validationRules.resetPassword,
+  validate(validationRules.resetPassword),
+  authController.resetPassword
+);
+
 // Protected routes (require authentication)
 router.use(authMiddleware.authenticateToken);
 

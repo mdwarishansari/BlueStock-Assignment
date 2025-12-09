@@ -112,6 +112,8 @@ export const ROUTES = {
   PROFILE: "/profile",
   EMAIL_VERIFIED: "/email-verified",
   VERIFY_ACCOUNT: "/verify-account",
+  FORGOT_PASSWORD: "/forgot-password", // ADD THIS
+  RESET_PASSWORD: "/reset-password",
   NOT_FOUND: "*",
 };
 
