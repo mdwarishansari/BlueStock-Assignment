@@ -1,83 +1,69 @@
 import axiosInstance from "./axiosInstance";
-import { API_ENDPOINTS } from "../utils/constants";
 
-/**
- * Authentication API Service
- */
-const authApi = {
-  /**
-   * Register new user
-   */
+export const authApi = {
+  // Register new user
   register: async (userData) => {
-    const response = await axiosInstance.post(API_ENDPOINTS.REGISTER, userData);
+    const response = await axiosInstance.post("/auth/register", userData);
     return response.data;
   },
 
-  /**
-   * Login user
-   */
+  // Login user
   login: async (credentials) => {
-    const response = await axiosInstance.post(API_ENDPOINTS.LOGIN, credentials);
+    const response = await axiosInstance.post("/auth/login", credentials);
     return response.data;
   },
 
-  /**
-   * Verify email
-   */
+  // Verify email
   verifyEmail: async (token) => {
-    const response = await axiosInstance.get(
-      `${API_ENDPOINTS.VERIFY_EMAIL}?token=${token}`
-    );
+    const response = await axiosInstance.get("/auth/verify-email", {
+      params: { token },
+    });
     return response.data;
   },
 
-  /**
-   * Verify mobile OTP
-   */
-  verifyMobile: async (otpData) => {
-    const response = await axiosInstance.post(
-      API_ENDPOINTS.VERIFY_MOBILE,
-      otpData
-    );
+  // Verify mobile OTP
+  verifyMobile: async (data) => {
+    const response = await axiosInstance.post("/auth/verify-mobile", data);
     return response.data;
   },
 
-  /**
-   * Resend OTP
-   */
+  // Resend OTP
   resendOTP: async (userId) => {
-    const response = await axiosInstance.post(API_ENDPOINTS.RESEND_OTP, {
+    const response = await axiosInstance.post("/auth/resend-otp", {
       user_id: userId,
     });
     return response.data;
   },
 
-  /**
-   * Get user profile
-   */
+  // Request password reset
+  forgotPassword: async (email) => {
+    const response = await axiosInstance.post("/auth/forgot-password", {
+      email,
+    });
+    return response.data;
+  },
+
+  // Reset password
+  resetPassword: async (data) => {
+    const response = await axiosInstance.post("/auth/reset-password", data);
+    return response.data;
+  },
+
+  // Get user profile
   getProfile: async () => {
-    const response = await axiosInstance.get(API_ENDPOINTS.PROFILE);
+    const response = await axiosInstance.get("/auth/profile");
     return response.data;
   },
 
-  /**
-   * Update user profile
-   */
-  updateProfile: async (profileData) => {
-    const response = await axiosInstance.put(
-      API_ENDPOINTS.UPDATE_PROFILE,
-      profileData
-    );
+  // Update user profile
+  updateProfile: async (data) => {
+    const response = await axiosInstance.put("/auth/profile", data);
     return response.data;
   },
 
-  /**
-   * Logout user
-   */
+  // Logout
   logout: async () => {
-    const response = await axiosInstance.post(API_ENDPOINTS.LOGOUT);
+    const response = await axiosInstance.post("/auth/logout");
     return response.data;
   },
 };
-
-export default authApi;

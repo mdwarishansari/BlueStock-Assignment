@@ -1,67 +1,39 @@
 import axiosInstance from "./axiosInstance";
-import { API_ENDPOINTS } from "../utils/constants";
 
-/**
- * Company API Service
- */
-const companyApi = {
-  /**
-   * Register company profile
-   */
-  registerCompany: async (companyData) => {
-    // If companyData is FormData, send as-is
-    // Otherwise, convert to FormData if files are present
-    const response = await axiosInstance.post(
-      API_ENDPOINTS.COMPANY_REGISTER,
-      companyData,
-      {
-        headers: {
-          "Content-Type":
-            companyData instanceof FormData
-              ? "multipart/form-data"
-              : "application/json",
-        },
-      }
-    );
+export const companyApi = {
+  // Register company profile
+  registerCompany: async (formData) => {
+    const response = await axiosInstance.post("/company/register", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return response.data;
   },
 
-  /**
-   * Get company profile
-   */
+  // Get company profile
   getCompanyProfile: async () => {
-    const response = await axiosInstance.get(API_ENDPOINTS.COMPANY_PROFILE);
+    const response = await axiosInstance.get("/company/profile");
     return response.data;
   },
 
-  /**
-   * Update company profile
-   */
-  updateCompanyProfile: async (companyData) => {
-    const response = await axiosInstance.put(
-      API_ENDPOINTS.COMPANY_UPDATE,
-      companyData,
-      {
-        headers: {
-          "Content-Type":
-            companyData instanceof FormData
-              ? "multipart/form-data"
-              : "application/json",
-        },
-      }
-    );
+  // Update company profile
+  updateCompanyProfile: async (formData) => {
+    const response = await axiosInstance.put("/company/profile", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return response.data;
   },
 
-  /**
-   * Upload company logo
-   */
+  // Upload logo
   uploadLogo: async (file) => {
     const formData = new FormData();
     formData.append("logo", file);
 
     const response = await axiosInstance.post(
-      API_ENDPOINTS.UPLOAD_LOGO,
+      "/company/upload-logo",
       formData,
       {
         headers: {
@@ -72,15 +44,13 @@ const companyApi = {
     return response.data;
   },
 
-  /**
-   * Upload company banner
-   */
+  // Upload banner
   uploadBanner: async (file) => {
     const formData = new FormData();
     formData.append("banner", file);
 
     const response = await axiosInstance.post(
-      API_ENDPOINTS.UPLOAD_BANNER,
+      "/company/upload-banner",
       formData,
       {
         headers: {
@@ -91,21 +61,15 @@ const companyApi = {
     return response.data;
   },
 
-  /**
-   * Delete company logo
-   */
+  // Delete logo
   deleteLogo: async () => {
-    const response = await axiosInstance.delete(API_ENDPOINTS.DELETE_LOGO);
+    const response = await axiosInstance.delete("/company/logo");
     return response.data;
   },
 
-  /**
-   * Delete company banner
-   */
+  // Delete banner
   deleteBanner: async () => {
-    const response = await axiosInstance.delete(API_ENDPOINTS.DELETE_BANNER);
+    const response = await axiosInstance.delete("/company/banner");
     return response.data;
   },
 };
-
-export default companyApi;

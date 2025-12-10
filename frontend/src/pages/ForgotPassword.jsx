@@ -1,28 +1,20 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Box,
-  Paper,
-  Typography,
+  Card,
   TextField,
   Button,
-  Link,
+  Typography,
+  Link as MuiLink,
   Alert,
+  CircularProgress,
 } from '@mui/material';
-import EmailIcon from '@mui/icons-material/Email';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { authApi } from '../api/authApi';
 import { toast } from 'react-toastify';
-import axiosInstance from '../api/axiosInstance';
-import { validateEmail } from '../utils/validators';
-import { ROUTES } from '../utils/constants';
-import LoadingSpinner from '../components/common/LoadingSpinner';
 
-/**
- * Forgot Password Page
- */
 const ForgotPassword = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
@@ -30,30 +22,16 @@ const ForgotPassword = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
-    mode: 'onBlur',
-  });
+  } = useForm();
 
   const onSubmit = async (data) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      
-      const response = await axiosInstance.post('/auth/forgot-password', {
-        email: data.email.toLowerCase().trim(),
-      });
-
-      if (response.data.success) {
-        setEmailSent(true);
-        toast.success(response.data.message);
-        
-        // In development, show the reset link
-        if (response.data.data?.reset_link) {
-          console.log('Reset Link:', response.data.data.reset_link);
-        }
-      }
+      await authApi.forgotPassword(data.email);
+      setEmailSent(true);
+      toast.success('Password reset link sent to your email!');
     } catch (error) {
-      console.error('Forgot password error:', error);
-      toast.error(error.response?.data?.message || 'Failed to send reset link');
+      toast.error('Failed to send reset link');
     } finally {
       setLoading(false);
     }
@@ -66,99 +44,70 @@ const ForgotPassword = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'background.default',
-        p: 2,
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: 3,
       }}
     >
-      <Paper
-        elevation={3}
+      <Card
         sx={{
-          maxWidth: 450,
+          maxWidth: 500,
           width: '100%',
           p: 4,
-          borderRadius: 2,
+          borderRadius: 3,
         }}
       >
-        {/* Back Button */}
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate(ROUTES.LOGIN)}
-          sx={{ mb: 2 }}
-        >
-          Back to Login
-        </Button>
+        <Typography variant="h4" fontWeight="bold" gutterBottom align="center">
+          🔑 Forgot Password?
+        </Typography>
+        <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
+          Enter your email address and we'll send you a link to reset your password
+        </Typography>
 
-        {/* Header */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Typography variant="h4" fontWeight={600} gutterBottom>
-            Forgot Password?
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Enter your email and we'll send you a reset link
-          </Typography>
-        </Box>
-
-        {emailSent ? (
+        {emailSent && (
           <Alert severity="success" sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-              Check Your Email!
-            </Typography>
-            <Typography variant="body2">
-              We've sent password reset instructions to your email address.
-              Please check your inbox and follow the link to reset your password.
-            </Typography>
+            Password reset link sent! Check your email inbox.
           </Alert>
-        ) : (
-          <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-              <TextField
-                fullWidth
-                label="Email Address"
-                type="email"
-                placeholder="Enter your email"
-                disabled={loading}
-                error={!!errors.email}
-                helperText={errors.email?.message}
-                InputProps={{
-                  startAdornment: <EmailIcon sx={{ mr: 1, color: 'action.active' }} />,
-                }}
-                {...register('email', {
-                  required: 'Email is required',
-                  validate: validateEmail,
-                })}
-              />
-
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                fullWidth
-                disabled={loading}
-                sx={{ py: 1.5, mt: 1 }}
-              >
-                {loading ? 'Sending...' : 'Send Reset Link'}
-              </Button>
-            </Box>
-          </form>
         )}
 
-        {/* Login Link */}
-        <Box sx={{ textAlign: 'center', mt: 3 }}>
-          <Typography variant="body2" color="text.secondary">
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+          <TextField
+            fullWidth
+            label="Email Address"
+            margin="normal"
+            {...register('email', {
+              required: 'Email is required',
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: 'Invalid email address',
+              },
+            })}
+            error={!!errors.email}
+            helperText={errors.email?.message}
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            size="large"
+            disabled={loading}
+            sx={{ mt: 3, mb: 2, borderRadius: 50, py: 1.5 }}
+          >
+            {loading ? <CircularProgress size={24} /> : 'Send Reset Link'}
+          </Button>
+
+          <Typography align="center" variant="body2">
             Remember your password?{' '}
-            <Link
-              component="button"
-              variant="body2"
-              onClick={() => navigate(ROUTES.LOGIN)}
-              sx={{ textDecoration: 'none', fontWeight: 600 }}
+            <MuiLink
+              component={Link}
+              to="/login"
+              sx={{ fontWeight: 600, textDecoration: 'none' }}
             >
-              Sign In
-            </Link>
+              Login
+            </MuiLink>
           </Typography>
         </Box>
-      </Paper>
-
-      {loading && <LoadingSpinner fullScreen message="Sending reset link..." />}
+      </Card>
     </Box>
   );
 };

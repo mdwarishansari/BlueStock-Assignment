@@ -1,172 +1,128 @@
-import { parsePhoneNumber } from "libphonenumber-js";
-import { VALIDATION_MESSAGES } from "./constants";
+import * as yup from "yup";
 
-/**
- * Validate email address
- */
+// Password validation regex
+const passwordRegex =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+// Validation schemas
+export const loginSchema = yup.object({
+  email: yup
+    .string()
+    .email("Invalid email address")
+    .required("Email is required"),
+  password: yup.string().required("Password is required"),
+});
+
+export const registerSchema = yup.object({
+  full_name: yup
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .required("Full name is required"),
+  email: yup
+    .string()
+    .email("Invalid email address")
+    .required("Email is required"),
+  mobile_no: yup
+    .string()
+    .min(10, "Invalid mobile number")
+    .required("Mobile number is required"),
+  gender: yup
+    .string()
+    .oneOf(["m", "f", "o"], "Invalid gender")
+    .required("Gender is required"),
+  password: yup
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .matches(
+      passwordRegex,
+      "Password must contain uppercase, lowercase, number and special character"
+    )
+    .required("Password is required"),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref("password"), null], "Passwords must match")
+    .required("Confirm password is required"),
+  agree: yup.boolean().oneOf([true], "You must agree to terms and conditions"),
+});
+
+export const companyBasicSchema = yup.object({
+  company_name: yup
+    .string()
+    .min(2, "Company name must be at least 2 characters")
+    .required("Company name is required"),
+  description: yup.string(),
+});
+
+export const companyFoundingSchema = yup.object({
+  industry: yup.string().required("Industry is required"),
+  founded_date: yup.date().nullable(),
+  website: yup.string().url("Invalid URL format").nullable(),
+});
+
+export const companyContactSchema = yup.object({
+  address: yup.string().required("Address is required"),
+  city: yup.string().required("City is required"),
+  state: yup.string().required("State is required"),
+  country: yup.string().required("Country is required"),
+  postal_code: yup.string().required("Postal code is required"),
+});
+
+// Helper validation functions
 export const validateEmail = (email) => {
-  if (!email) return VALIDATION_MESSAGES.REQUIRED;
-
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return VALIDATION_MESSAGES.EMAIL_INVALID;
-  }
-
-  return true;
+  return emailRegex.test(email);
 };
 
-/**
- * Validate password strength
- */
+export const validatePhone = (phone) => {
+  const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+  return phoneRegex.test(phone);
+};
+
 export const validatePassword = (password) => {
-  if (!password) return VALIDATION_MESSAGES.REQUIRED;
-
-  if (password.length < 8) {
-    return VALIDATION_MESSAGES.PASSWORD_MIN;
-  }
-
-  // Must contain: uppercase, lowercase, number, special character
-  const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]/;
-  if (!passwordRegex.test(password)) {
-    return VALIDATION_MESSAGES.PASSWORD_PATTERN;
-  }
-
-  return true;
+  return passwordRegex.test(password);
 };
 
-/**
- * Validate mobile number with country code
- */
-export const validateMobile = (mobile) => {
-  if (!mobile) return VALIDATION_MESSAGES.REQUIRED;
-
+export const validateURL = (url) => {
   try {
-    // Remove spaces and dashes
-    const cleanedNumber = mobile.replace(/[\s-]/g, "");
-
-    // Parse phone number
-    const phoneNumber = parsePhoneNumber(cleanedNumber);
-
-    if (!phoneNumber || !phoneNumber.isValid()) {
-      return VALIDATION_MESSAGES.MOBILE_INVALID;
-    }
-
+    new URL(url);
     return true;
-  } catch (error) {
-    return VALIDATION_MESSAGES.MOBILE_INVALID;
+  } catch {
+    return false;
   }
 };
 
-/**
- * Validate URL/Website
- */
-export const validateWebsite = (url) => {
-  if (!url) return true; // Optional field
+// File validation
+export const validateImageFile = (file, maxSizeMB = 5) => {
+  if (!file) return { valid: false, error: "No file selected" };
 
-  try {
-    const urlRegex =
-      /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-    if (!urlRegex.test(url)) {
-      return VALIDATION_MESSAGES.WEBSITE_INVALID;
-    }
-    return true;
-  } catch (error) {
-    return VALIDATION_MESSAGES.WEBSITE_INVALID;
-  }
-};
-
-/**
- * Validate postal code
- */
-export const validatePostalCode = (postalCode) => {
-  if (!postalCode) return VALIDATION_MESSAGES.REQUIRED;
-
-  // Basic validation - alphanumeric, 3-10 characters
-  const postalRegex = /^[A-Za-z0-9]{3,10}$/;
-  if (!postalRegex.test(postalCode)) {
-    return VALIDATION_MESSAGES.POSTAL_CODE_INVALID;
+  const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+  if (!validTypes.includes(file.type)) {
+    return {
+      valid: false,
+      error: "Only JPEG, PNG, and WebP images are allowed",
+    };
   }
 
-  return true;
-};
-
-/**
- * Validate file size
- */
-export const validateFileSize = (file, maxSize = 5 * 1024 * 1024) => {
-  if (!file) return true;
-
+  const maxSize = maxSizeMB * 1024 * 1024; // Convert MB to bytes
   if (file.size > maxSize) {
-    return VALIDATION_MESSAGES.FILE_SIZE_EXCEEDED;
+    return {
+      valid: false,
+      error: `File size must be less than ${maxSizeMB}MB`,
+    };
   }
 
-  return true;
+  return { valid: true };
 };
 
-/**
- * Validate file type (images)
- */
-export const validateImageType = (file) => {
-  if (!file) return true;
-
-  const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-  if (!allowedTypes.includes(file.type)) {
-    return VALIDATION_MESSAGES.FILE_TYPE_INVALID;
-  }
-
-  return true;
-};
-
-/**
- * Validate required field
- */
-export const validateRequired = (value, fieldName = "This field") => {
-  if (!value || (typeof value === "string" && value.trim() === "")) {
-    return `${fieldName} is required`;
-  }
-  return true;
-};
-
-/**
- * Validate date (not in future)
- */
-export const validatePastDate = (date) => {
-  if (!date) return true; // Optional
-
-  const selectedDate = new Date(date);
-  const today = new Date();
-
-  if (selectedDate > today) {
-    return "Date cannot be in the future";
-  }
-
-  return true;
-};
-
-/**
- * Validate OTP (6 digits)
- */
-export const validateOTP = (otp) => {
-  if (!otp) return VALIDATION_MESSAGES.REQUIRED;
-
-  const otpRegex = /^\d{6}$/;
-  if (!otpRegex.test(otp)) {
-    return "OTP must be 6 digits";
-  }
-
-  return true;
-};
-
-/**
- * Validate confirm password
- */
-export const validateConfirmPassword = (password, confirmPassword) => {
-  if (!confirmPassword) return VALIDATION_MESSAGES.REQUIRED;
-
-  if (password !== confirmPassword) {
-    return "Passwords do not match";
-  }
-
-  return true;
+export default {
+  loginSchema,
+  registerSchema,
+  companyBasicSchema,
+  companyFoundingSchema,
+  companyContactSchema,
+  validateEmail,
+  validatePhone,
+  validatePassword,
+  validateURL,
+  validateImageFile,
 };

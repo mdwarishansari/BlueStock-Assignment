@@ -1,70 +1,59 @@
 import { createTheme } from "@mui/material/styles";
 
-/**
- * MUI Theme Configuration
- */
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#1976d2",
-      light: "#42a5f5",
-      dark: "#1565c0",
+      main: "#4F46E5", // Indigo-600
+      light: "#818CF8",
+      dark: "#3730A3",
       contrastText: "#fff",
     },
     secondary: {
-      main: "#9c27b0",
-      light: "#ba68c8",
-      dark: "#7b1fa2",
-      contrastText: "#fff",
+      main: "#06B6D4", // Cyan-500
+      light: "#67E8F9",
+      dark: "#0891B2",
     },
     error: {
-      main: "#d32f2f",
-      light: "#ef5350",
-      dark: "#c62828",
+      main: "#EF4444",
+      light: "#FCA5A5",
+      dark: "#DC2626",
     },
     warning: {
-      main: "#ed6c02",
-      light: "#ff9800",
-      dark: "#e65100",
-    },
-    info: {
-      main: "#0288d1",
-      light: "#03a9f4",
-      dark: "#01579b",
+      main: "#F59E0B",
+      light: "#FCD34D",
+      dark: "#D97706",
     },
     success: {
-      main: "#2e7d32",
-      light: "#4caf50",
-      dark: "#1b5e20",
+      main: "#10B981",
+      light: "#6EE7B7",
+      dark: "#059669",
     },
     background: {
-      default: "#f5f5f5",
-      paper: "#ffffff",
+      default: "#F9FAFB",
+      paper: "#FFFFFF",
     },
     text: {
-      primary: "#212121",
-      secondary: "#757575",
-      disabled: "#bdbdbd",
+      primary: "#111827",
+      secondary: "#6B7280",
     },
   },
   typography: {
     fontFamily: [
+      "Inter",
       "-apple-system",
       "BlinkMacSystemFont",
       '"Segoe UI"',
       "Roboto",
-      '"Helvetica Neue"',
-      "Arial",
       "sans-serif",
     ].join(","),
     h1: {
       fontSize: "2.5rem",
-      fontWeight: 600,
+      fontWeight: 700,
       lineHeight: 1.2,
     },
     h2: {
       fontSize: "2rem",
-      fontWeight: 600,
+      fontWeight: 700,
       lineHeight: 1.3,
     },
     h3: {
@@ -93,11 +82,7 @@ const theme = createTheme({
     },
     body2: {
       fontSize: "0.875rem",
-      lineHeight: 1.43,
-    },
-    button: {
-      textTransform: "none",
-      fontWeight: 500,
+      lineHeight: 1.5,
     },
   },
   shape: {
@@ -105,27 +90,27 @@ const theme = createTheme({
   },
   shadows: [
     "none",
-    "0px 2px 4px rgba(0,0,0,0.05)",
-    "0px 4px 8px rgba(0,0,0,0.08)",
-    "0px 8px 16px rgba(0,0,0,0.1)",
-    "0px 12px 24px rgba(0,0,0,0.12)",
-    "0px 16px 32px rgba(0,0,0,0.14)",
-    "0px 20px 40px rgba(0,0,0,0.16)",
+    "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+    "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+    "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+    "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+    "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+    "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
     ...Array(18).fill("none"),
   ],
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
+          textTransform: "none",
+          fontWeight: 600,
           borderRadius: 8,
-          padding: "8px 16px",
-          fontSize: "0.95rem",
-          fontWeight: 500,
+          padding: "10px 20px",
         },
         contained: {
-          boxShadow: "0px 2px 4px rgba(0,0,0,0.1)",
+          boxShadow: "none",
           "&:hover": {
-            boxShadow: "0px 4px 8px rgba(0,0,0,0.15)",
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
           },
         },
       },
@@ -143,24 +128,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 12,
-          boxShadow: "0px 2px 8px rgba(0,0,0,0.08)",
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-        },
-        elevation1: {
-          boxShadow: "0px 2px 4px rgba(0,0,0,0.05)",
-        },
-      },
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          boxShadow: "0px 1px 3px rgba(0,0,0,0.08)",
+          boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
         },
       },
     },

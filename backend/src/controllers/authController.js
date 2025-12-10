@@ -1,5 +1,6 @@
 const createError = require("http-errors");
 const userModel = require("../models/userModel");
+const companyModel = require("../models/companyModel"); // <-- ADDED HERE
 const { firebaseAuth } = require("../config/firebase");
 const jwtUtils = require("../utils/jwt");
 const { logger } = require("../utils/logger");
@@ -18,14 +19,11 @@ const authController = {
       } = req.body;
 
       const emailExists = await userModel.emailExists(email);
-      if (emailExists) {
-        throw createError(409, "Email already registered");
-      }
+      if (emailExists) throw createError(409, "Email already registered");
 
       const mobileExists = await userModel.mobileExists(mobile_no);
-      if (mobileExists) {
+      if (mobileExists)
         throw createError(409, "Mobile number already registered");
-      }
 
       let firebaseUser;
       try {
@@ -38,15 +36,12 @@ const authController = {
       } catch (firebaseError) {
         logger.error("Firebase user creation failed:", firebaseError.message);
 
-        if (firebaseError.code === "auth/email-already-exists") {
+        if (firebaseError.code === "auth/email-already-exists")
           throw createError(409, "Email already exists in Firebase");
-        }
-        if (firebaseError.code === "auth/invalid-email") {
+        if (firebaseError.code === "auth/invalid-email")
           throw createError(400, "Invalid email format");
-        }
-        if (firebaseError.code === "auth/weak-password") {
+        if (firebaseError.code === "auth/weak-password")
           throw createError(400, "Password is too weak");
-        }
 
         throw createError(
           500,
@@ -54,16 +49,14 @@ const authController = {
         );
       }
 
-      const userData = {
+      const newUser = await userModel.createUser({
         email,
         password,
         full_name,
         gender,
         mobile_no,
         signup_type,
-      };
-
-      const newUser = await userModel.createUser(userData);
+      });
 
       try {
         await firebaseAuth.sendSMSOTP(mobile_no);
@@ -71,7 +64,7 @@ const authController = {
         logger.warn("Failed to send SMS OTP:", otpError.message);
       }
 
-      const response = {
+      res.status(201).json({
         success: true,
         message: "User registered successfully. Please verify mobile OTP.",
         data: {
@@ -81,36 +74,34 @@ const authController = {
           mobile_no: newUser.mobile_no,
           firebase_uid: firebaseUser.uid,
         },
-      };
-
-      res.status(201).json(response);
+      });
     } catch (error) {
       next(error);
     }
   },
 
-  // Login user
+  // ---------------------------------------------------
+  // LOGIN USER (UPDATED)
+  // ---------------------------------------------------
   login: async (req, res, next) => {
     try {
       const { email, password } = req.body;
 
       const user = await userModel.findByEmail(email);
-      if (!user) {
-        throw createError(401, "Invalid email or password");
-      }
+      if (!user) throw createError(401, "Invalid email or password");
 
       const isPasswordValid = await userModel.verifyPassword(
         password,
         user.password
       );
-      if (!isPasswordValid) {
-        throw createError(401, "Invalid email or password");
-      }
+      if (!isPasswordValid) throw createError(401, "Invalid email or password");
 
+      // Email verification check
       if (!user.is_email_verified && process.env.NODE_ENV !== "development") {
         throw createError(403, "Please verify your email before logging in");
       }
 
+      // Firebase credential validation
       try {
         await firebaseAuth.verifyCredentials(email, password);
       } catch (firebaseError) {
@@ -122,6 +113,9 @@ const authController = {
           throw createError(401, "Authentication service error");
         }
       }
+
+      // CHECK IF USER HAS COMPANY PROFILE
+      const companyProfile = await companyModel.getCompanyByOwnerId(user.id);
 
       const tokenPayload = {
         userId: user.id,
@@ -139,9 +133,10 @@ const authController = {
         is_email_verified: user.is_email_verified,
         is_mobile_verified: user.is_mobile_verified,
         created_at: user.created_at,
+        hasCompany: !!companyProfile, // <-- NEW FLAG
       };
 
-      const response = {
+      res.status(200).json({
         success: true,
         message: "Login successful",
         data: {
@@ -149,9 +144,7 @@ const authController = {
           user: userData,
           token_expires_in: process.env.JWT_EXPIRES_IN || "90d",
         },
-      };
-
-      res.status(200).json(response);
+      });
     } catch (error) {
       next(error);
     }
@@ -163,9 +156,7 @@ const authController = {
       const { user_id, otp } = req.body;
 
       const user = await userModel.findById(user_id);
-      if (!user) {
-        throw createError(404, "User not found");
-      }
+      if (!user) throw createError(404, "User not found");
 
       if (user.is_mobile_verified) {
         return res.status(200).json({
@@ -186,7 +177,7 @@ const authController = {
         is_mobile_verified: true,
       });
 
-      const response = {
+      res.status(200).json({
         success: true,
         message: "Mobile number verified successfully",
         data: {
@@ -194,9 +185,7 @@ const authController = {
           mobile_no: user.mobile_no,
           is_mobile_verified: true,
         },
-      };
-
-      res.status(200).json(response);
+      });
     } catch (error) {
       next(error);
     }
@@ -206,15 +195,11 @@ const authController = {
   verifyEmail: async (req, res, next) => {
     if (process.env.NODE_ENV === "development") {
       const userId = req.query.user_id;
-
-      if (!userId) {
+      if (!userId)
         throw createError(400, "user_id is required in development mode");
-      }
 
       const user = await userModel.findById(userId);
-      if (!user) {
-        throw createError(404, "User not found");
-      }
+      if (!user) throw createError(404, "User not found");
 
       await userModel.updateVerificationStatus(userId, {
         is_email_verified: true,
@@ -229,17 +214,11 @@ const authController = {
 
     try {
       const { token } = req.query;
+      if (!token) throw createError(400, "Verification token is required");
 
-      if (!token) {
-        throw createError(400, "Verification token is required");
-      }
-
-      const mockEmail = "user@example.com";
-
+      const mockEmail = "user@example.com"; // Placeholder
       const user = await userModel.findByEmail(mockEmail);
-      if (!user) {
-        throw createError(404, "User not found");
-      }
+      if (!user) throw createError(404, "User not found");
 
       if (user.is_email_verified) {
         return res.status(200).json({
@@ -254,17 +233,14 @@ const authController = {
       });
 
       if (req.accepts("html")) {
-        res.redirect(`${process.env.CLIENT_URL}/email-verified`);
-      } else {
-        res.status(200).json({
-          success: true,
-          message: "Email verified successfully",
-          data: {
-            email: user.email,
-            is_email_verified: true,
-          },
-        });
+        return res.redirect(`${process.env.CLIENT_URL}/email-verified`);
       }
+
+      res.status(200).json({
+        success: true,
+        message: "Email verified successfully",
+        data: { email: user.email, is_email_verified: true },
+      });
     } catch (error) {
       next(error);
     }
@@ -273,15 +249,10 @@ const authController = {
   // Get current user profile
   getProfile: async (req, res, next) => {
     try {
-      if (!req.user) {
-        throw createError(401, "Authentication required");
-      }
+      if (!req.user) throw createError(401, "Authentication required");
 
       const userWithCompany = await userModel.getUserWithCompany(req.user.id);
-
-      if (!userWithCompany) {
-        throw createError(404, "User not found");
-      }
+      if (!userWithCompany) throw createError(404, "User not found");
 
       const userData = {
         id: userWithCompany.id,
@@ -317,16 +288,11 @@ const authController = {
         };
       }
 
-      const response = {
+      res.status(200).json({
         success: true,
         message: "Profile retrieved successfully",
-        data: {
-          user: userData,
-          company: companyData,
-        },
-      };
-
-      res.status(200).json(response);
+        data: { user: userData, company: companyData },
+      });
     } catch (error) {
       next(error);
     }
@@ -335,19 +301,16 @@ const authController = {
   // Update profile
   updateProfile: async (req, res, next) => {
     try {
-      if (!req.user) {
-        throw createError(401, "Authentication required");
-      }
+      if (!req.user) throw createError(401, "Authentication required");
 
       const { full_name, gender, mobile_no } = req.body;
 
       if (mobile_no) {
         const user = await userModel.findById(req.user.id);
         if (user.mobile_no !== mobile_no) {
-          const mobileExists = await userModel.mobileExists(mobile_no);
-          if (mobileExists) {
+          const exists = await userModel.mobileExists(mobile_no);
+          if (exists)
             throw createError(409, "Mobile number already registered");
-          }
         }
       }
 
@@ -356,24 +319,19 @@ const authController = {
       if (gender !== undefined) updateData.gender = gender;
       if (mobile_no !== undefined) updateData.mobile_no = mobile_no;
 
-      if (Object.keys(updateData).length === 0) {
+      if (Object.keys(updateData).length === 0)
         throw createError(400, "No data provided for update");
-      }
 
       const updatedUser = await userModel.updateProfile(
         req.user.id,
         updateData
       );
 
-      const response = {
+      res.status(200).json({
         success: true,
         message: "Profile updated successfully",
-        data: {
-          user: updatedUser,
-        },
-      };
-
-      res.status(200).json(response);
+        data: { user: updatedUser },
+      });
     } catch (error) {
       next(error);
     }
@@ -385,13 +343,9 @@ const authController = {
       const { user_id } = req.body;
 
       const user = await userModel.findById(user_id);
-      if (!user) {
-        throw createError(404, "User not found");
-      }
-
-      if (user.is_mobile_verified) {
-        throw createError(400, "Mobile number already verified");
-      }
+      if (!user) throw createError(404, "User not found");
+      if (user.is_mobile_verified)
+        throw createError(400, "Mobile already verified");
 
       try {
         await firebaseAuth.sendSMSOTP(user.mobile_no);
@@ -403,19 +357,14 @@ const authController = {
       res.status(200).json({
         success: true,
         message: "OTP resent successfully",
-        data: {
-          user_id: user.id,
-          mobile_no: user.mobile_no,
-        },
+        data: { user_id: user.id, mobile_no: user.mobile_no },
       });
     } catch (error) {
       next(error);
     }
   },
 
-  // ---------------------------------------------------
-  // INSERTED: Request Password Reset
-  // ---------------------------------------------------
+  // Request Password Reset
   requestPasswordReset: async (req, res, next) => {
     try {
       const { email } = req.body;
@@ -431,7 +380,7 @@ const authController = {
       if (process.env.NODE_ENV === "development") {
         return res.status(200).json({
           success: true,
-          message: "Password reset link (development mode). Check console.",
+          message: "Password reset link (development mode)",
           data: {
             reset_link: `${process.env.CLIENT_URL}/reset-password?email=${email}`,
           },
@@ -449,17 +398,13 @@ const authController = {
     }
   },
 
-  // ---------------------------------------------------
-  // INSERTED: Reset Password
-  // ---------------------------------------------------
+  // Reset Password
   resetPassword: async (req, res, next) => {
     try {
       const { email, new_password } = req.body;
 
       const user = await userModel.findByEmail(email);
-      if (!user) {
-        throw createError(404, "User not found");
-      }
+      if (!user) throw createError(404, "User not found");
 
       const bcrypt = require("bcrypt");
       const hashedPassword = await bcrypt.hash(new_password, 10);
@@ -474,8 +419,7 @@ const authController = {
 
       res.status(200).json({
         success: true,
-        message:
-          "Password reset successful. Please login with your new password.",
+        message: "Password reset successful. Login with new password.",
       });
     } catch (error) {
       next(error);
@@ -487,8 +431,7 @@ const authController = {
     try {
       res.status(200).json({
         success: true,
-        message:
-          "Logout successful. Please remove the token from client storage.",
+        message: "Logout successful. Remove token on client side.",
       });
     } catch (error) {
       next(error);

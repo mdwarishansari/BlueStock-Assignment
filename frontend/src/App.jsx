@@ -1,136 +1,110 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline } from '@mui/material';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { Provider } from 'react-redux';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
-// Store
-import { store } from './store/store';
-
-// Theme
-import theme from './styles/theme';
-
-// Components
-import ErrorBoundary from './components/common/ErrorBoundary';
-import PrivateRoute from './components/common/PrivateRoute';
-import Layout from './components/layout/Layout';
+import { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 
 // Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import CompanyRegistration from './pages/CompanyRegistration';
-import Settings from './pages/Settings';
-import Profile from './pages/Profile';
-import VerifyAccount from './pages/VerifyAccount';
+import CompanySetup from './pages/CompanySetup';
+import NotFound from './pages/NotFound';
 import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
+// Utils
+import { setUser } from './store/slices/authSlice';
+import Cookies from 'js-cookie';
 
-// Constants
-import { ROUTES, TOAST_CONFIG } from './utils/constants';
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
 
-// Create React Query client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+// Public Route Component (redirect if authenticated)
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  
+  if (isAuthenticated) {
+    // Check if company setup is complete
+    if (!user?.hasCompany) {
+      return <Navigate to="/company-setup" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return children;
+};
 
-/**
- * Main App Component
- */
 function App() {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    // Check for existing session
+    const token = Cookies.get('token');
+    const storedUser = localStorage.getItem('user');
+    
+    if (token && storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        dispatch(setUser({ user: userData, token }));
+      } catch (error) {
+        console.error('Failed to restore session:', error);
+        Cookies.remove('token');
+        localStorage.removeItem('user');
+      }
+    }
+  }, [dispatch]);
+
   return (
-    <ErrorBoundary>
-      <Provider store={store}>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <BrowserRouter>
-              <Routes>
-                {/* Public Routes */}
-                <Route path={ROUTES.LOGIN} element={<Login />} />
-                <Route path={ROUTES.REGISTER} element={<Register />} />
-                <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
-                <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
+    <Routes>
+      {/* Public Routes */}
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicRoute>
+            <Register />
+          </PublicRoute>
+        }
+      />
 
-                {/* Protected Routes */}
-                <Route
-                  path={ROUTES.DASHBOARD}
-                  element={
-                    <PrivateRoute>
-                      <Layout>
-                        <Dashboard />
-                      </Layout>
-                    </PrivateRoute>
-                  }
-                />
+<Route
+  path="/forgot-password"
+  element={
+    <PublicRoute>
+      <ForgotPassword />
+    </PublicRoute>
+  }
+/>
+      {/* Protected Routes */}
+      <Route
+        path="/company-setup"
+        element={
+          <ProtectedRoute>
+            <CompanySetup />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/*"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
 
-                <Route
-                  path={ROUTES.VERIFY_ACCOUNT}
-                  element={
-                    <PrivateRoute>
-                      <Layout>
-                        <VerifyAccount />
-                      </Layout>
-                    </PrivateRoute>
-                  }
-                />
-
-                <Route
-                  path={ROUTES.COMPANY_REGISTRATION}
-                  element={
-                    <PrivateRoute>
-                      <Layout>
-                        <CompanyRegistration />
-                      </Layout>
-                    </PrivateRoute>
-                  }
-                />
-
-                <Route
-                  path={ROUTES.SETTINGS}
-                  element={
-                    <PrivateRoute>
-                      <Layout>
-                        <Settings />
-                      </Layout>
-                    </PrivateRoute>
-                  }
-                />
-
-                <Route
-                  path={ROUTES.PROFILE}
-                  element={
-                    <PrivateRoute>
-                      <Layout>
-                        <Profile />
-                      </Layout>
-                    </PrivateRoute>
-                  }
-                />
-
-                {/* Redirect root to dashboard */}
-                <Route path="/" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-
-                {/* 404 - Not Found */}
-                <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-              </Routes>
-            </BrowserRouter>
-
-            {/* Toast Notifications */}
-            <ToastContainer {...TOAST_CONFIG} />
-          </ThemeProvider>
-        </QueryClientProvider>
-      </Provider>
-    </ErrorBoundary>
+      {/* Redirects */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 

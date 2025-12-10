@@ -1,174 +1,217 @@
-// API Constants
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:4000/api";
-export const SERVER_URL =
-  import.meta.env.VITE_SERVER_URL || "http://localhost:4000";
+// API endpoints
+export const API_ENDPOINTS = {
+  AUTH: {
+    REGISTER: "/auth/register",
+    LOGIN: "/auth/login",
+    LOGOUT: "/auth/logout",
+    VERIFY_EMAIL: "/auth/verify-email",
+    VERIFY_MOBILE: "/auth/verify-mobile",
+    RESEND_OTP: "/auth/resend-otp",
+    FORGOT_PASSWORD: "/auth/forgot-password",
+    RESET_PASSWORD: "/auth/reset-password",
+    PROFILE: "/auth/profile",
+  },
+  COMPANY: {
+    REGISTER: "/company/register",
+    PROFILE: "/company/profile",
+    UPLOAD_LOGO: "/company/upload-logo",
+    UPLOAD_BANNER: "/company/upload-banner",
+    DELETE_LOGO: "/company/logo",
+    DELETE_BANNER: "/company/banner",
+  },
+};
 
-// App Constants
-export const APP_NAME =
-  import.meta.env.VITE_APP_NAME || "BlueStock Company Portal";
-export const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.0";
-
-// JWT Token Key
-export const TOKEN_KEY = "bluestock_auth_token";
-
-// Gender Options
+// Gender options
 export const GENDER_OPTIONS = [
   { value: "m", label: "Male" },
   { value: "f", label: "Female" },
   { value: "o", label: "Other" },
 ];
 
-// Industry Options
-export const INDUSTRY_OPTIONS = [
+// Industry types
+export const INDUSTRIES = [
   "Technology",
-  "Finance",
   "Healthcare",
+  "Finance",
   "Education",
+  "E-commerce",
   "Manufacturing",
-  "Retail",
   "Real Estate",
+  "Retail",
   "Transportation",
-  "Entertainment",
   "Food & Beverage",
+  "Entertainment",
   "Consulting",
   "Marketing",
   "Construction",
-  "Energy",
   "Agriculture",
+  "Energy",
   "Telecommunications",
-  "Hospitality",
-  "E-commerce",
-  "Automotive",
+  "Pharmaceutical",
+  "Legal",
   "Other",
 ];
 
-// Country Options (Sample - Add more as needed)
-export const COUNTRY_OPTIONS = [
-  "India",
-  "United States",
-  "United Kingdom",
-  "Canada",
-  "Australia",
-  "Germany",
-  "France",
-  "Japan",
-  "China",
-  "Singapore",
-  "United Arab Emirates",
+// Team sizes
+export const TEAM_SIZES = [
+  { value: "1-10", label: "1-10 employees" },
+  { value: "11-50", label: "11-50 employees" },
+  { value: "51-200", label: "51-200 employees" },
+  { value: "201-500", label: "201-500 employees" },
+  { value: "501-1000", label: "501-1000 employees" },
+  { value: "1000+", label: "1000+ employees" },
 ];
 
-// Social Media Platforms
+// Organization types
+export const ORGANIZATION_TYPES = [
+  { value: "private", label: "Private Company" },
+  { value: "public", label: "Public Company" },
+  { value: "non-profit", label: "Non-Profit Organization" },
+  { value: "government", label: "Government Agency" },
+  { value: "startup", label: "Startup" },
+];
+
+// Social media platforms
 export const SOCIAL_PLATFORMS = [
-  { key: "website", label: "Website", icon: "🌐" },
-  { key: "linkedin", label: "LinkedIn", icon: "💼" },
-  { key: "twitter", label: "Twitter", icon: "🐦" },
-  { key: "facebook", label: "Facebook", icon: "📘" },
-  { key: "instagram", label: "Instagram", icon: "📷" },
-  { key: "youtube", label: "YouTube", icon: "▶️" },
+  {
+    value: "facebook",
+    label: "Facebook",
+    icon: "📘",
+    placeholder: "https://facebook.com/yourpage",
+  },
+  {
+    value: "twitter",
+    label: "Twitter",
+    icon: "🐦",
+    placeholder: "https://twitter.com/yourhandle",
+  },
+  {
+    value: "instagram",
+    label: "Instagram",
+    icon: "📷",
+    placeholder: "https://instagram.com/yourprofile",
+  },
+  {
+    value: "linkedin",
+    label: "LinkedIn",
+    icon: "💼",
+    placeholder: "https://linkedin.com/company/yourcompany",
+  },
+  {
+    value: "youtube",
+    label: "YouTube",
+    icon: "▶️",
+    placeholder: "https://youtube.com/c/yourchannel",
+  },
 ];
 
-// File Upload Constants
-export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-export const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
+// Countries (sample list - expand as needed)
+export const COUNTRIES = [
+  { value: "IN", label: "India" },
+  { value: "US", label: "United States" },
+  { value: "UK", label: "United Kingdom" },
+  { value: "CA", label: "Canada" },
+  { value: "AU", label: "Australia" },
+  { value: "DE", label: "Germany" },
+  { value: "FR", label: "France" },
+  { value: "JP", label: "Japan" },
+  { value: "SG", label: "Singapore" },
+  { value: "AE", label: "United Arab Emirates" },
 ];
 
-// Toast Configuration
-export const TOAST_CONFIG = {
-  position: "top-right",
-  autoClose: 3000,
-  hideProgressBar: false,
-  closeOnClick: true,
-  pauseOnHover: true,
-  draggable: true,
+// File upload constraints
+export const FILE_CONSTRAINTS = {
+  LOGO: {
+    MAX_SIZE: 5 * 1024 * 1024, // 5MB
+    ACCEPTED_FORMATS: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
+    MIN_DIMENSIONS: { width: 100, height: 100 },
+    RECOMMENDED_DIMENSIONS: { width: 400, height: 400 },
+  },
+  BANNER: {
+    MAX_SIZE: 5 * 1024 * 1024, // 5MB
+    ACCEPTED_FORMATS: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
+    MIN_DIMENSIONS: { width: 1200, height: 300 },
+    RECOMMENDED_DIMENSIONS: { width: 1520, height: 400 },
+  },
 };
 
-// Validation Messages
-export const VALIDATION_MESSAGES = {
-  REQUIRED: "This field is required",
-  EMAIL_INVALID: "Please enter a valid email address",
-  PASSWORD_MIN: "Password must be at least 8 characters",
-  PASSWORD_PATTERN:
-    "Password must contain uppercase, lowercase, number and special character",
-  MOBILE_INVALID: "Please enter a valid mobile number",
-  WEBSITE_INVALID: "Please enter a valid URL",
-  POSTAL_CODE_INVALID: "Please enter a valid postal code",
-  FILE_SIZE_EXCEEDED: "File size should not exceed 5MB",
-  FILE_TYPE_INVALID: "Only JPG, PNG, and WebP images are allowed",
+// Regex patterns
+export const REGEX_PATTERNS = {
+  EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  PHONE: /^\+?[1-9]\d{1,14}$/,
+  PASSWORD:
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+  URL: /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/,
+  POSTAL_CODE: /^[A-Z0-9\s-]{3,10}$/i,
+};
+
+// Toast messages
+export const TOAST_MESSAGES = {
+  SUCCESS: {
+    LOGIN: "Login successful!",
+    REGISTER: "Registration successful!",
+    PROFILE_UPDATE: "Profile updated successfully!",
+    COMPANY_UPDATE: "Company profile updated successfully!",
+    LOGO_UPLOAD: "Logo uploaded successfully!",
+    BANNER_UPLOAD: "Banner uploaded successfully!",
+    EMAIL_VERIFIED: "Email verified successfully!",
+    MOBILE_VERIFIED: "Mobile verified successfully!",
+    OTP_SENT: "OTP sent successfully!",
+    PASSWORD_RESET: "Password reset successfully!",
+  },
+  ERROR: {
+    LOGIN_FAILED: "Login failed. Please check your credentials.",
+    REGISTER_FAILED: "Registration failed. Please try again.",
+    NETWORK_ERROR: "Network error. Please check your connection.",
+    UNAUTHORIZED: "Session expired. Please login again.",
+    SERVER_ERROR: "Server error. Please try again later.",
+    VALIDATION_ERROR: "Please check your input and try again.",
+    FILE_TOO_LARGE: "File size exceeds the maximum limit.",
+    INVALID_FILE_TYPE: "Invalid file type. Please upload a valid image.",
+  },
 };
 
 // Routes
 export const ROUTES = {
-  HOME: "/",
   LOGIN: "/login",
   REGISTER: "/register",
-  DASHBOARD: "/dashboard",
-  COMPANY_REGISTRATION: "/company/register",
-  SETTINGS: "/settings",
-  PROFILE: "/profile",
-  EMAIL_VERIFIED: "/email-verified",
-  VERIFY_ACCOUNT: "/verify-account",
-  FORGOT_PASSWORD: "/forgot-password", // ADD THIS
+  FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
-  NOT_FOUND: "*",
+  DASHBOARD: "/dashboard",
+  COMPANY_SETUP: "/company-setup",
+  PROFILE_EDIT: "/dashboard/profile-edit",
+  COMPANY_EDIT: "/dashboard/company-edit",
+  VERIFICATION: "/dashboard/verification",
 };
 
-// Local Storage Keys
+// Local storage keys
 export const STORAGE_KEYS = {
-  TOKEN: "bluestock_auth_token",
-  USER: "bluestock_user_data",
-  REMEMBER_ME: "bluestock_remember_me",
+  USER: "user",
+  TOKEN: "token",
+  THEME: "theme",
+  SIDEBAR_STATE: "sidebarOpen",
 };
 
-// API Endpoints
-export const API_ENDPOINTS = {
-  // Auth
-  REGISTER: "/auth/register",
-  LOGIN: "/auth/login",
-  VERIFY_EMAIL: "/auth/verify-email",
-  VERIFY_MOBILE: "/auth/verify-mobile",
-  RESEND_OTP: "/auth/resend-otp",
-  LOGOUT: "/auth/logout",
-  PROFILE: "/auth/profile",
-  UPDATE_PROFILE: "/auth/profile",
-
-  // Company
-  COMPANY_REGISTER: "/company/register",
-  COMPANY_PROFILE: "/company/profile",
-  COMPANY_UPDATE: "/company/profile",
-  UPLOAD_LOGO: "/company/upload-logo",
-  UPLOAD_BANNER: "/company/upload-banner",
-  DELETE_LOGO: "/company/logo",
-  DELETE_BANNER: "/company/banner",
+// Date formats
+export const DATE_FORMATS = {
+  SHORT: "MM/DD/YYYY",
+  LONG: "MMMM DD, YYYY",
+  API: "YYYY-MM-DD",
+  DISPLAY: "DD MMM YYYY",
 };
 
-// HTTP Status Codes
-export const HTTP_STATUS = {
-  OK: 200,
-  CREATED: 201,
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
-  NOT_FOUND: 404,
-  CONFLICT: 409,
-  UNPROCESSABLE_ENTITY: 422,
-  INTERNAL_SERVER_ERROR: 500,
-};
-
-// Query Keys for React Query
-export const QUERY_KEYS = {
-  USER_PROFILE: "userProfile",
-  COMPANY_PROFILE: "companyProfile",
-  AUTH_USER: "authUser",
-};
-
-// Default Pagination
-export const PAGINATION = {
-  DEFAULT_PAGE: 1,
-  DEFAULT_LIMIT: 10,
-  MAX_LIMIT: 100,
+export default {
+  API_ENDPOINTS,
+  GENDER_OPTIONS,
+  INDUSTRIES,
+  TEAM_SIZES,
+  ORGANIZATION_TYPES,
+  SOCIAL_PLATFORMS,
+  COUNTRIES,
+  FILE_CONSTRAINTS,
+  REGEX_PATTERNS,
+  TOAST_MESSAGES,
+  ROUTES,
+  STORAGE_KEYS,
+  DATE_FORMATS,
 };
