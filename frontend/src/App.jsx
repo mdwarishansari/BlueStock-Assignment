@@ -9,6 +9,8 @@ import Dashboard from './pages/Dashboard';
 import CompanySetup from './pages/CompanySetup';
 import NotFound from './pages/NotFound';
 import ForgotPassword from './pages/ForgotPassword';
+import EmailVerified from './pages/EmailVerified'; // ✅ NEW
+
 // Utils
 import { setUser } from './store/slices/authSlice';
 import Cookies from 'js-cookie';
@@ -36,7 +38,6 @@ const PublicRoute = ({ children }) => {
 
 function App() {
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     // Check for existing session
@@ -74,15 +75,19 @@ function App() {
           </PublicRoute>
         }
       />
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute>
+            <ForgotPassword />
+          </PublicRoute>
+        }
+      />
 
-<Route
-  path="/forgot-password"
-  element={
-    <PublicRoute>
-      <ForgotPassword />
-    </PublicRoute>
-  }
-/>
+      {/* ✅ NEW: Email Verification Route (Public) */}
+      <Route path="/verify-email" element={<EmailVerified />} />
+      <Route path="/email-verified" element={<EmailVerified />} />
+
       {/* Protected Routes */}
       <Route
         path="/company-setup"

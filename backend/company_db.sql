@@ -1,7 +1,6 @@
 -- ============================
 -- USERS TABLE
 -- ============================
-
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -12,9 +11,19 @@ CREATE TABLE IF NOT EXISTS users (
     mobile_no VARCHAR(20) UNIQUE NOT NULL,
     is_mobile_verified BOOLEAN DEFAULT false,
     is_email_verified BOOLEAN DEFAULT false,
+
+    -- 👇 Add new columns here
+    email_verification_token TEXT,
+    email_verification_expires TIMESTAMP,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Index for faster lookup
+CREATE INDEX IF NOT EXISTS idx_email_verification_token 
+ON users(email_verification_token);
+
 
 -- ============================
 -- COMPANY PROFILE TABLE

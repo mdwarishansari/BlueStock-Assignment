@@ -32,8 +32,22 @@ const authMiddleware = {
         return next();
       }
 
-      // ❌ Block other routes until verified
-      if (!user.is_email_verified) {
+      // ✅ Allow company-setup even if not verified (they need to access it after login)
+      if (req.originalUrl.includes("/api/company/")) {
+        // In dev mode, allow company routes even if email not verified
+        if (process.env.NODE_ENV === "development" || user.is_email_verified) {
+          req.user = {
+            id: user.id,
+            email: user.email,
+            is_email_verified: user.is_email_verified,
+            is_mobile_verified: user.is_mobile_verified,
+          };
+          return next();
+        }
+      }
+
+      // ❌ Block other routes until verified (in production only)
+      if (!user.is_email_verified && process.env.NODE_ENV !== "development") {
         throw createError(403, "Please verify your email first");
       }
 
@@ -52,7 +66,7 @@ const authMiddleware = {
     }
   },
 
-  // Optional authentication (for public routes that need user info if available)
+  // ... rest of the middleware code stays the same
   optionalAuth: async (req, res, next) => {
     try {
       const authHeader = req.headers.authorization;
@@ -74,12 +88,10 @@ const authMiddleware = {
 
       next();
     } catch (error) {
-      // Don't throw error for optional auth, just continue without user
       next();
     }
   },
 
-  // Check if user owns the resource (for company operations)
   checkCompanyOwnership: async (req, res, next) => {
     try {
       const companyId = req.params.id || req.body.company_id;
@@ -88,15 +100,12 @@ const authMiddleware = {
         throw createError(400, "Company ID is required");
       }
 
-      // In this app, each user can only have one company
-      // So we check if the user has a company profile
       const userWithCompany = await userModel.getUserWithCompany(req.user.id);
 
       if (!userWithCompany || !userWithCompany.company_id) {
         throw createError(404, "Company profile not found");
       }
 
-      // Attach company to request
       req.company = {
         id: userWithCompany.company_id,
         owner_id: req.user.id,
@@ -109,8 +118,6 @@ const authMiddleware = {
     }
   },
 
-  // Rate limiting helper (already implemented in server.js)
-  // This is for specific endpoint rate limiting
   createRateLimiter: (windowMs = 15 * 60 * 1000, max = 100) => {
     const rateLimit = require("express-rate-limit");
 
@@ -126,13 +133,12 @@ const authMiddleware = {
     });
   },
 
-  // Brute force protection for login
   loginRateLimiter: () => {
     const rateLimit = require("express-rate-limit");
 
     return rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 5, // 5 attempts per window
+      windowMs: 15 * 60 * 1000,
+      max: 5,
       message: {
         success: false,
         message: "Too many login attempts. Please try again later.",
