@@ -7,6 +7,12 @@ const companyController = {
   // Register company profile
   registerCompany: async (req, res, next) => {
     try {
+      console.log("\n==============================");
+      console.log("HEADERS:", req.headers["content-type"]);
+      console.log("BODY:", req.body);
+      console.log("FILES:", req.filesInfo || req.files);
+      console.log("==============================\n");
+
       const userId = req.user.id;
 
       // Check if user already has a company profile

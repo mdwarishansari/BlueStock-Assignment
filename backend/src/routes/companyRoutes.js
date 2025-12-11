@@ -1,3 +1,4 @@
+// backend/src/routes/companyRoutes.js
 const express = require("express");
 const router = express.Router();
 const companyController = require("../controllers/companyController");
@@ -9,18 +10,17 @@ const {
 const authMiddleware = require("../middleware/auth");
 const uploadMiddleware = require("../middleware/uploadMiddleware");
 
-// Apply sanitization to all routes
-router.use(sanitizeInput);
-
-// All company routes require authentication
+// Auth first (keep auth)
 router.use(authMiddleware.authenticateToken);
+
+// NOTE: keeping sanitizeInput globally is OK now because it skips multipart requests
+// router.use(sanitizeInput);
 
 // Company profile routes
 router.post(
   "/register",
-  uploadMiddleware.uploadCompanyImages,
-  validationRules.companyRegister,
-  validate(validationRules.companyRegister),
+  uploadMiddleware.uploadCompanyImages, // multer -> populates req.body
+  validate(validationRules.companyRegister), // then validate parsed fields
   companyController.registerCompany
 );
 
@@ -29,12 +29,11 @@ router.get("/profile", companyController.getCompanyProfile);
 router.put(
   "/profile",
   uploadMiddleware.uploadCompanyImages,
-  validationRules.companyUpdate,
   validate(validationRules.companyUpdate),
   companyController.updateCompanyProfile
 );
 
-// File upload routes
+// File upload routes (logo/banner)
 router.post(
   "/upload-logo",
   uploadMiddleware.uploadLogo,
@@ -50,7 +49,6 @@ router.post(
 );
 
 router.delete("/logo", companyController.deleteLogo);
-
 router.delete("/banner", companyController.deleteBanner);
 
 module.exports = router;

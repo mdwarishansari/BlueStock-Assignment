@@ -1,9 +1,11 @@
-const { body, param, query, validationResult } = require("express-validator");
-const createError = require("http-errors");
+const { body, validationResult } = require("express-validator");
+const sanitize = require("sanitize-html");
 
-// Common validation rules
+// =========================
+// VALIDATION RULES
+// =========================
 const validationRules = {
-  // Registration validation
+  // User registration
   register: [
     body("email")
       .trim()
@@ -19,11 +21,9 @@ const validationRules = {
       .withMessage("Password is required")
       .isLength({ min: 8 })
       .withMessage("Password must be at least 8 characters")
-      .matches(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/
-      )
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
       .withMessage(
-        "Password must contain at least one uppercase, one lowercase, one number and one special character"
+        "Password must contain uppercase, lowercase, number, special character"
       ),
 
     body("full_name")
@@ -31,9 +31,9 @@ const validationRules = {
       .notEmpty()
       .withMessage("Full name is required")
       .isLength({ min: 2, max: 255 })
-      .withMessage("Full name must be between 2 and 255 characters")
+      .withMessage("Full name must be 2–255 chars")
       .matches(/^[a-zA-Z\s]+$/)
-      .withMessage("Full name can only contain letters and spaces"),
+      .withMessage("Full name can contain letters & spaces only"),
 
     body("gender")
       .trim()
@@ -47,17 +47,12 @@ const validationRules = {
       .notEmpty()
       .withMessage("Mobile number is required")
       .matches(/^\+[1-9]\d{1,14}$/)
-      .withMessage(
-        "Please provide a valid mobile number with country code (e.g., +919876543210)"
-      ),
+      .withMessage("Enter valid mobile number with country code"),
 
-    body("signup_type")
-      .optional()
-      .isIn(["e"])
-      .withMessage('Signup type must be "e"'),
+    body("signup_type").optional().isIn(["e"]),
   ],
 
-  // Login validation
+  // Login
   login: [
     body("email")
       .trim()
@@ -69,73 +64,39 @@ const validationRules = {
     body("password").trim().notEmpty().withMessage("Password is required"),
   ],
 
-  // Mobile verification validation
+  // OTP verification
   verifyMobile: [
-    body("user_id")
-      .notEmpty()
-      .withMessage("User ID is required")
-      .isInt()
-      .withMessage("User ID must be a number"),
-
-    body("otp")
-      .trim()
-      .notEmpty()
-      .withMessage("OTP is required")
-      .isLength({ min: 6, max: 6 })
-      .withMessage("OTP must be 6 digits")
-      .isNumeric()
-      .withMessage("OTP must contain only numbers"),
+    body("user_id").notEmpty().withMessage("User ID required").isInt(),
+    body("otp").trim().notEmpty().isLength({ min: 6, max: 6 }).isNumeric(),
   ],
 
-  // Forgot password validation
-  forgotPassword: [
-    body("email")
-      .trim()
-      .notEmpty()
-      .withMessage("Email is required")
-      .isEmail()
-      .withMessage("Invalid email format")
-      .normalizeEmail(),
-  ],
+  // Forgot password
+  forgotPassword: [body("email").trim().notEmpty().isEmail().normalizeEmail()],
 
-  // Reset password validation
+  // Reset password
   resetPassword: [
-    body("email")
-      .trim()
-      .notEmpty()
-      .withMessage("Email is required")
-      .isEmail()
-      .withMessage("Invalid email format")
-      .normalizeEmail(),
+    body("email").trim().notEmpty().isEmail().normalizeEmail(),
     body("new_password")
       .trim()
       .notEmpty()
-      .withMessage("New password is required")
       .isLength({ min: 8 })
-      .withMessage("Password must be at least 8 characters")
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])/)
-      .withMessage(
-        "Password must contain uppercase, lowercase, number, and special character"
-      ),
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])/),
   ],
 
-  // Company registration validation
+  // ==============================
+  // COMPANY REGISTRATION (FIXED)
+  // ==============================
   companyRegister: [
     body("company_name")
       .trim()
       .notEmpty()
       .withMessage("Company name is required")
-      .isLength({ min: 2, max: 255 })
-      .withMessage("Company name must be between 2 and 255 characters"),
+      .isLength({ min: 2, max: 255 }),
 
     body("address").trim().notEmpty().withMessage("Address is required"),
-
     body("city").trim().notEmpty().withMessage("City is required"),
-
     body("state").trim().notEmpty().withMessage("State is required"),
-
     body("country").trim().notEmpty().withMessage("Country is required"),
-
     body("postal_code")
       .trim()
       .notEmpty()
@@ -143,151 +104,118 @@ const validationRules = {
 
     body("industry").trim().notEmpty().withMessage("Industry is required"),
 
-    body("website")
-      .optional()
-      .isURL()
-      .withMessage("Please provide a valid website URL"),
+    // Optional website
+    body("website").optional().isURL().withMessage("Invalid website URL"),
 
+    // Optional founded_date
     body("founded_date")
       .optional()
       .isISO8601()
-      .withMessage("Please provide a valid date (YYYY-MM-DD)"),
+      .withMessage("Invalid date format"),
 
-    body("description")
+    // Optional description
+    body("description").optional().trim().isLength({ max: 1000 }),
+
+    // ★ NEW FIELDS — matching your frontend ★
+    body("organization_type").optional().isString(),
+    body("team_size").optional().isString(),
+    body("vision").optional().isString(),
+    body("phone").optional().isString(),
+    body("contact_email")
       .optional()
-      .trim()
-      .isLength({ max: 1000 })
-      .withMessage("Description cannot exceed 1000 characters"),
+      .isEmail()
+      .withMessage("Invalid contact email"),
 
+    // Social links as JSON
     body("social_links")
       .optional()
       .custom((value) => {
         if (typeof value === "string") {
-          try {
-            JSON.parse(value);
-            return true;
-          } catch (e) {
-            throw new Error("Social links must be valid JSON");
-          }
+          JSON.parse(value);
         }
         return true;
       }),
   ],
 
-  // Company update validation
+  // COMPANY UPDATE
   companyUpdate: [
-    body("company_name")
-      .optional()
-      .trim()
-      .isLength({ min: 2, max: 255 })
-      .withMessage("Company name must be between 2 and 255 characters"),
-
+    body("company_name").optional().trim().isLength({ min: 2, max: 255 }),
     body("address").optional().trim(),
-
     body("city").optional().trim(),
-
     body("state").optional().trim(),
-
     body("country").optional().trim(),
-
     body("postal_code").optional().trim(),
-
     body("industry").optional().trim(),
-
-    body("website")
-      .optional()
-      .isURL()
-      .withMessage("Please provide a valid website URL"),
-
-    body("founded_date")
-      .optional()
-      .isISO8601()
-      .withMessage("Please provide a valid date (YYYY-MM-DD)"),
-
-    body("description")
-      .optional()
-      .trim()
-      .isLength({ max: 1000 })
-      .withMessage("Description cannot exceed 1000 characters"),
-
+    body("website").optional().isURL(),
+    body("founded_date").optional().isISO8601(),
+    body("description").optional().trim().isLength({ max: 1000 }),
+    body("organization_type").optional().isString(),
+    body("team_size").optional().isString(),
+    body("vision").optional().isString(),
+    body("phone").optional().isString(),
+    body("contact_email").optional().isEmail(),
     body("social_links")
       .optional()
       .custom((value) => {
-        if (typeof value === "string") {
-          try {
-            JSON.parse(value);
-            return true;
-          } catch (e) {
-            throw new Error("Social links must be valid JSON");
-          }
-        }
+        if (typeof value === "string") JSON.parse(value);
         return true;
       }),
   ],
 };
 
-// Validation middleware
-const validate = (validations) => {
+// =========================
+// VALIDATION MIDDLEWARE
+// =========================
+const validate = (rules) => {
   return async (req, res, next) => {
-    // Run validations
-    await Promise.all(validations.map((validation) => validation.run(req)));
+    await Promise.all(rules.map((rule) => rule.run(req)));
 
-    // Check for errors
     const errors = validationResult(req);
-    if (errors.isEmpty()) {
-      return next();
-    }
+    if (errors.isEmpty()) return next();
 
-    // Extract error messages
-    const extractedErrors = errors.array().map((err) => ({
-      field: err.path || err.param,
-      message: err.msg,
-    }));
-
-    // Send validation error response
     return res.status(422).json({
       success: false,
       message: "Validation failed",
-      errors: extractedErrors,
+      errors: errors.array().map((e) => ({
+        field: e.path,
+        message: e.msg,
+      })),
     });
   };
 };
 
-// Sanitization middleware
+// =========================
+// SANITIZATION (SAFE FOR MULTIPART)
+// =========================
 const sanitizeInput = (req, res, next) => {
-  // Sanitize body, query, and params
-  const sanitize = require("sanitize-html");
+  try {
+    if ((req.headers["content-type"] || "").includes("multipart/form-data")) {
+      return next();
+    }
+  } catch {}
 
-  const sanitizeObject = (obj) => {
-    if (!obj || typeof obj !== "object") return obj;
+  const clean = (obj) => {
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return obj;
 
-    const sanitized = {};
-    for (const [key, value] of Object.entries(obj)) {
-      if (typeof value === "string") {
-        sanitized[key] = sanitize(value, {
-          allowedTags: [], // No HTML tags allowed
+    const output = {};
+    for (const [key, val] of Object.entries(obj)) {
+      if (typeof val === "string") {
+        output[key] = sanitize(val, {
+          allowedTags: [],
           allowedAttributes: {},
         }).trim();
-      } else if (typeof value === "object" && value !== null) {
-        sanitized[key] = sanitizeObject(value);
+      } else if (typeof val === "object") {
+        output[key] = clean(val);
       } else {
-        sanitized[key] = value;
+        output[key] = val;
       }
     }
-    return sanitized;
+    return output;
   };
 
-  if (req.body) {
-    req.body = sanitizeObject(req.body);
-  }
-
-  if (req.query) {
-    req.query = sanitizeObject(req.query);
-  }
-
-  if (req.params) {
-    req.params = sanitizeObject(req.params);
-  }
+  req.body = clean(req.body);
+  req.query = clean(req.query);
+  req.params = clean(req.params);
 
   next();
 };

@@ -1,111 +1,76 @@
 import { useState } from 'react';
-import {
-  Box,
-  Card,
-  TextField,
-  Button,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  IconButton,
-} from '@mui/material';
+import { Box, Card, TextField, Button, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
 import { Add, Close } from '@mui/icons-material';
-import { useForm, Controller } from 'react-hook-form';
 
 const socialPlatforms = [
-  { value: 'facebook', label: 'Facebook', icon: '📘' },
-  { value: 'twitter', label: 'Twitter', icon: '🐦' },
-  { value: 'instagram', label: 'Instagram', icon: '📷' },
-  { value: 'youtube', label: 'Youtube', icon: '▶️' },
-  { value: 'linkedin', label: 'LinkedIn', icon: '💼' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'twitter', label: 'Twitter' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'youtube', label: 'Youtube' },
+  { value: 'linkedin', label: 'LinkedIn' },
 ];
 
 const SocialLinksStep = ({ data, onNext, onBack }) => {
-  const [socialLinks, setSocialLinks] = useState(
-    data.social_links && Object.keys(data.social_links).length > 0
+  const [links, setLinks] = useState(
+    Object.keys(data.social_links).length
       ? Object.entries(data.social_links).map(([platform, url]) => ({ platform, url }))
       : [{ platform: 'facebook', url: '' }]
   );
 
-  const { handleSubmit } = useForm();
-
-  const addSocialLink = () => {
-    setSocialLinks([...socialLinks, { platform: 'facebook', url: '' }]);
+  const addLink = () => setLinks([...links, { platform: 'facebook', url: '' }]);
+  const removeLink = (i) => setLinks(links.filter((_, idx) => i !== idx));
+  const update = (i, field, val) => {
+    const u = [...links];
+    u[i][field] = val;
+    setLinks(u);
   };
 
-  const removeSocialLink = (index) => {
-    setSocialLinks(socialLinks.filter((_, i) => i !== index));
-  };
-
-  const updateSocialLink = (index, field, value) => {
-    const updated = [...socialLinks];
-    updated[index][field] = value;
-    setSocialLinks(updated);
-  };
-
-  const onSubmit = () => {
+  const handleSubmit = () => {
     const social_links = {};
-    socialLinks.forEach((link) => {
-      if (link.url) {
-        social_links[link.platform] = link.url;
-      }
+    links.forEach((l) => {
+      if (l.url.trim() !== '') social_links[l.platform] = l.url;
     });
+
     onNext({ social_links });
   };
 
   return (
     <Card sx={{ p: 4 }}>
-      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-        {socialLinks.map((link, index) => (
-          <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel>Social Link {index + 1}</InputLabel>
-              <Select
-                value={link.platform}
-                onChange={(e) => updateSocialLink(index, 'platform', e.target.value)}
-                label={`Social Link ${index + 1}`}
-              >
-                {socialPlatforms.map((platform) => (
-                  <MenuItem key={platform.value} value={platform.value}>
-                    {platform.icon} {platform.label}
-                  </MenuItem>
+      <Box component="form" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+
+        {links.map((link, i) => (
+          <Box key={i} display="flex" gap={2} mb={2}>
+            <FormControl sx={{ width: 200 }}>
+              <InputLabel>Platform</InputLabel>
+              <Select value={link.platform} label="Platform" onChange={(e) => update(i, 'platform', e.target.value)}>
+                {socialPlatforms.map((p) => (
+                  <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>
                 ))}
               </Select>
             </FormControl>
 
             <TextField
               fullWidth
-              placeholder="Profile link/url..."
+              placeholder="Profile link..."
               value={link.url}
-              onChange={(e) => updateSocialLink(index, 'url', e.target.value)}
+              onChange={(e) => update(i, 'url', e.target.value)}
             />
 
-            <IconButton onClick={() => removeSocialLink(index)} disabled={socialLinks.length === 1}>
+            <IconButton disabled={links.length === 1} onClick={() => removeLink(i)}>
               <Close />
             </IconButton>
           </Box>
         ))}
 
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<Add />}
-          onClick={addSocialLink}
-          sx={{ mb: 3 }}
-        >
-          Add New Social Link
+        <Button fullWidth variant="outlined" startIcon={<Add />} onClick={addLink} sx={{ mb: 3 }}>
+          Add Social Link
         </Button>
 
-        {/* Action Buttons */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button variant="outlined" size="large" onClick={onBack}>
-            Previous
-          </Button>
-          <Button type="submit" variant="contained" size="large">
-            Save & Next →
-          </Button>
+        <Box display="flex" justifyContent="space-between">
+          <Button variant="outlined" onClick={onBack}>Previous</Button>
+          <Button variant="contained" type="submit">Save & Next →</Button>
         </Box>
+
       </Box>
     </Card>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -25,31 +25,50 @@ const CompanySetup = () => {
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.company);
   const [activeStep, setActiveStep] = useState(0);
+  
+  // ✅ FIX: Initialize with ALL required fields
   const [companyData, setCompanyData] = useState({
+    // Step 1: Company Info
     logo: null,
     banner: null,
     company_name: '',
     description: '',
     industry: '',
+    
+    // Step 2: Founding Info
     founded_date: null,
     website: '',
+    
+    // Step 3: Social Links
     social_links: {},
+    
+    // Step 4: Contact (REQUIRED FIELDS)
     address: '',
     city: '',
     state: '',
     country: '',
     postal_code: '',
+    phone: '',
+    contact_email: '',
   });
+  
   const [isComplete, setIsComplete] = useState(false);
 
   const progress = ((activeStep + 1) / steps.length) * 100;
 
-  const handleNext = (data) => {
-    setCompanyData((prev) => ({ ...prev, ...data }));
+  // ✅ FIX: Accumulate data from each step
+  const handleNext = (stepData) => {
+    console.log('Step data received:', stepData);
+    
+    // Merge new step data with existing data
+    const updatedData = { ...companyData, ...stepData };
+    setCompanyData(updatedData);
+    
+    console.log('Updated company data:', updatedData);
     
     if (activeStep === steps.length - 1) {
-      // Last step - submit
-      handleSubmit({ ...companyData, ...data });
+      // Last step - submit with ALL accumulated data
+      handleSubmit(updatedData);
     } else {
       setActiveStep((prev) => prev + 1);
     }
@@ -60,24 +79,66 @@ const CompanySetup = () => {
   };
 
   const handleSubmit = async (finalData) => {
+    console.log('Submitting final data:', finalData);
+    
     const formData = new FormData();
     
-    // Append text fields
-    Object.keys(finalData).forEach((key) => {
-      if (key === 'logo' || key === 'banner') {
-        if (finalData[key]) {
-          formData.append(key, finalData[key]);
-        }
-      } else if (key === 'social_links') {
-        formData.append(key, JSON.stringify(finalData[key]));
-      } else if (key === 'founded_date' && finalData[key]) {
-        formData.append(key, finalData[key].toISOString().split('T')[0]);
-      } else if (finalData[key] !== null && finalData[key] !== '') {
-        formData.append(key, finalData[key]);
+    // ✅ Append files first
+    if (finalData.logo) {
+      formData.append('logo', finalData.logo);
+    }
+    if (finalData.banner) {
+      formData.append('banner', finalData.banner);
+    }
+    
+    // ✅ Append ALL required text fields
+    const requiredFields = {
+      company_name: finalData.company_name,
+      address: finalData.address,
+      city: finalData.city,
+      state: finalData.state,
+      country: finalData.country,
+      postal_code: finalData.postal_code,
+      industry: finalData.industry,
+    };
+    
+    // Add required fields
+    Object.entries(requiredFields).forEach(([key, value]) => {
+      if (value) {
+        formData.append(key, value);
       }
     });
+    
+    // ✅ Add optional fields if they exist
+    if (finalData.description) {
+      formData.append('description', finalData.description);
+    }
+    if (finalData.website) {
+      formData.append('website', finalData.website);
+    }
+    if (finalData.phone) {
+      formData.append('phone', finalData.phone);
+    }
+    if (finalData.contact_email) {
+      formData.append('contact_email', finalData.contact_email);
+    }
+    if (finalData.founded_date) {
+      formData.append('founded_date', finalData.founded_date.toISOString().split('T')[0]);
+    }
+    
+    // ✅ Add social links as JSON string
+    if (finalData.social_links && Object.keys(finalData.social_links).length > 0) {
+      formData.append('social_links', JSON.stringify(finalData.social_links));
+    }
+    
+    // Debug: Log FormData contents
+    console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(key, ':', value);
+    }
 
     const result = await dispatch(registerCompany(formData));
+    
     if (result.type === 'company/register/fulfilled') {
       // Refresh user profile to update hasCompany flag
       await dispatch(fetchUserProfile());
@@ -132,7 +193,6 @@ const CompanySetup = () => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
       <Container maxWidth="md">
-        {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h5" fontWeight="bold" color="primary">
             🧳 Jobpilot
@@ -147,16 +207,14 @@ const CompanySetup = () => {
           </Box>
         </Box>
 
-        {/* Progress Bar */}
         <LinearProgress
           variant="determinate"
           value={progress}
           sx={{ mb: 4, height: 8, borderRadius: 4 }}
         />
 
-        {/* Stepper */}
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((label, index) => (
+          {steps.map((label) => (
             <Step key={label}>
               <StepLabel
                 sx={{
@@ -171,7 +229,6 @@ const CompanySetup = () => {
           ))}
         </Stepper>
 
-        {/* Step Content */}
         {renderStep()}
       </Container>
     </Box>
