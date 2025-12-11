@@ -7,77 +7,94 @@ import axios from 'axios';
 const EmailVerified = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState('verifying'); // verifying | success | error
-  const [message, setMessage] = useState('');
+
+  const [status, setStatus] = useState("verifying"); // verifying | success | error
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const verifyEmail = async () => {
-      const token = searchParams.get('token');
-      const urlStatus = searchParams.get('status');
-      const urlMsg = searchParams.get('msg');
+    const token = searchParams.get("token");
+    const urlStatus = searchParams.get("status");
+    const urlMsg = searchParams.get("msg");
 
-      // If backend already redirected with status
-      if (urlStatus === 'success') {
-        setStatus('success');
-        setMessage('Email verified successfully!');
-        return;
-      }
+    // Backend redirected success
+if (urlStatus === "success") {
+  setStatus("success");
+  setMessage("Email verified successfully!");
 
-      if (urlStatus === 'error') {
-        setStatus('error');
-        setMessage(decodeURIComponent(urlMsg || 'Verification failed'));
-        return;
-      }
+  // remove token so axios won't run
+  window.history.replaceState({}, "", "/verify-email?status=success");
+  return;
+}
 
-      // Otherwise verify with token
-      if (!token) {
-        setStatus('error');
-        setMessage('Invalid verification link');
-        return;
-      }
+// Backend redirected error
+if (urlStatus === "error") {
+  setStatus("error");
+  setMessage(decodeURIComponent(urlMsg || "Verification failed"));
 
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/auth/verify-email?token=${token}`
-        );
+  window.history.replaceState({}, "", "/verify-email?status=error");
+  return;
+}
 
-        if (response.data.success) {
-          setStatus('success');
-          setMessage(response.data.message || 'Email verified successfully!');
-        }
-      } catch (error) {
-        setStatus('error');
-        setMessage(
-          error.response?.data?.message || 
-          'Verification failed. Token may be invalid or expired.'
-        );
-      }
-    };
 
-    verifyEmail();
+    // CASE 3: No status & no token → invalid link
+    if (!token) {
+      setStatus("error");
+      setMessage("Invalid verification link");
+      return;
+    }
+
+    // CASE 4: Direct token verification
+    if (token) {
+  // Let the backend redirect naturally
+  window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/verify-email?token=${token}`;
+  return;
+}
+
   }, [searchParams]);
+
+  // ---------------------------------------------
+  // FUNCTION: verifies token only when needed
+  // ---------------------------------------------
+  const verifyWithToken = async (token) => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/auth/verify-email?token=${token}`
+      );
+
+      if (res.data.success) {
+        setStatus("success");
+        setMessage(res.data.message || "Email verified successfully!");
+      }
+    } catch (err) {
+      setStatus("error");
+      setMessage(
+        err.response?.data?.message ||
+        "Verification failed. Token may be invalid or expired."
+      );
+    }
+  };
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         padding: 3,
       }}
     >
       <Card
         sx={{
           maxWidth: 500,
-          width: '100%',
+          width: "100%",
           p: 4,
-          textAlign: 'center',
+          textAlign: "center",
           borderRadius: 3,
         }}
       >
-        {status === 'verifying' && (
+        {status === "verifying" && (
           <>
             <CircularProgress size={60} sx={{ mb: 3 }} />
             <Typography variant="h5" fontWeight="bold">
@@ -86,21 +103,21 @@ const EmailVerified = () => {
           </>
         )}
 
-        {status === 'success' && (
+        {status === "success" && (
           <>
             <Box
               sx={{
                 width: 80,
                 height: 80,
-                borderRadius: '50%',
-                bgcolor: 'success.light',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 2rem',
+                borderRadius: "50%",
+                bgcolor: "success.light",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 2rem",
               }}
             >
-              <CheckCircle sx={{ fontSize: 50, color: 'success.main' }} />
+              <CheckCircle sx={{ fontSize: 50, color: "success.main" }} />
             </Box>
             <Typography variant="h5" fontWeight="bold" gutterBottom>
               ✅ Email Verified!
@@ -108,32 +125,27 @@ const EmailVerified = () => {
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
               {message}
             </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => navigate('/login')}
-              fullWidth
-            >
+            <Button variant="contained" size="large" onClick={() => navigate("/login")} fullWidth>
               Go to Login
             </Button>
           </>
         )}
 
-        {status === 'error' && (
+        {status === "error" && (
           <>
             <Box
               sx={{
                 width: 80,
                 height: 80,
-                borderRadius: '50%',
-                bgcolor: 'error.light',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 2rem',
+                borderRadius: "50%",
+                bgcolor: "error.light",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 2rem",
               }}
             >
-              <Error sx={{ fontSize: 50, color: 'error.main' }} />
+              <Error sx={{ fontSize: 50, color: "error.main" }} />
             </Box>
             <Typography variant="h5" fontWeight="bold" gutterBottom>
               ❌ Verification Failed
@@ -141,12 +153,7 @@ const EmailVerified = () => {
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
               {message}
             </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => navigate('/login')}
-              fullWidth
-            >
+            <Button variant="contained" size="large" onClick={() => navigate("/login")} fullWidth>
               Go to Login
             </Button>
           </>

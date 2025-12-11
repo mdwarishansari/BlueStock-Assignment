@@ -25,6 +25,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { registerUser } from '../store/slices/authSlice';
 import OTPVerificationModal from '../components/auth/OTPVerificationModal';
+import React from 'react';
+const MemoPhoneInput = React.memo(PhoneInput);
 
 const schema = yup.object({
   full_name: yup.string().required('Full name is required'),
@@ -46,6 +48,7 @@ const Register = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, registrationData } = useSelector((state) => state.auth);
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [otpModalOpen, setOtpModalOpen] = useState(false);
@@ -57,24 +60,29 @@ const Register = () => {
     formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
+    mode: "onSubmit", 
     defaultValues: {
-      gender: 'm',
+      gender: "m",
       agree: false,
     },
   });
 
-  const { confirmPassword, agree, ...formData } = data;
-const payload = {
-  ...formData,
-  signup_type: 'e',
-};
+  // ✅ THIS IS THE CORRECT PLACE FOR onSubmit
+  const onSubmit = async (data) => {
+    const { confirmPassword, agree, ...formData } = data;
 
+    const payload = {
+      ...formData,
+      signup_type: "e",
+    };
 
     const result = await dispatch(registerUser(payload));
-    if (result.type === 'auth/register/fulfilled') {
+
+    if (result.type === "auth/register/fulfilled") {
       setOtpModalOpen(true);
     }
   };
+
 
   const handleOTPVerified = () => {
     setOtpModalOpen(false);
@@ -150,7 +158,7 @@ const payload = {
                   name="mobile_no"
                   control={control}
                   render={({ field }) => (
-                    <PhoneInput
+                    <MemoPhoneInput
                       country={'in'}
                       value={field.value}
                       onChange={(phone) => field.onChange(`+${phone}`)}

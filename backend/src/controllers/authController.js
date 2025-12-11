@@ -56,24 +56,9 @@ const authController = {
         newUser.id
       );
 
-      // Send verification email
-      try {
-        await emailService.sendVerificationEmail(
-          email,
-          verificationData.email_verification_token,
-          newUser.id
-        );
-      } catch (emailErr) {
-        logger.warn("Email could not be sent, but user was created");
-      }
-
-      // Send SMS OTP
-      try {
-        await firebaseAuth.sendSMSOTP(mobile_no);
-      } catch (otpErr) {
-        logger.warn("SMS OTP send failed:", otpErr.message);
-      }
-
+      // -------------------------------
+      // 🔥 SEND RESPONSE IMMEDIATELY
+      // -------------------------------
       res.status(201).json({
         success: true,
         message:
@@ -86,6 +71,28 @@ const authController = {
           firebase_uid: firebaseUser.uid,
         },
       });
+
+      // -------------------------------
+      // 🔥 SEND EMAIL IN BACKGROUND
+      // -------------------------------
+      emailService
+        .sendVerificationEmail(
+          email,
+          verificationData.email_verification_token,
+          newUser.id
+        )
+        .catch((err) => {
+          logger.warn("Email sending failed:", err.message);
+        });
+
+      // -------------------------------
+      // 🔥 SEND SMS IN BACKGROUND
+      // -------------------------------
+      firebaseAuth.sendSMSOTP(mobile_no).catch((err) => {
+        logger.warn("SMS OTP send failed:", err.message);
+      });
+
+      // No more blocking the frontend
     } catch (error) {
       next(error);
     }
