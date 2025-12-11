@@ -63,12 +63,12 @@ const Register = () => {
     },
   });
 
-  const onSubmit = async (data) => {
-    const { confirmPassword, agree, ...registrationData } = data;
-    const payload = {
-      ...registrationData,
-      signup_type: 'e',
-    };
+  const { confirmPassword, agree, ...formData } = data;
+const payload = {
+  ...formData,
+  signup_type: 'e',
+};
+
 
     const result = await dispatch(registerUser(payload));
     if (result.type === 'auth/register/fulfilled') {
