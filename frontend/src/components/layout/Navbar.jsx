@@ -10,12 +10,10 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Divider,
-  Badge,
+  Divider
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  Notifications,
   AccountCircle,
   Logout,
   Settings,
@@ -70,13 +68,8 @@ const Navbar = ({ onToggleSidebar }) => {
           {company?.company_name || 'Dashboard'}
         </Typography>
 
+        {/* RIGHT SIDE */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton color="inherit">
-            <Badge badgeContent={4} color="error">
-              <Notifications />
-            </Badge>
-          </IconButton>
-
           <IconButton onClick={handleMenuOpen}>
             <Avatar
               src={company?.logo_url}
@@ -103,16 +96,21 @@ const Navbar = ({ onToggleSidebar }) => {
                 {user?.email}
               </Typography>
             </Box>
+
             <Divider />
+
             <MenuItem onClick={handleProfile}>
               <AccountCircle sx={{ mr: 2 }} />
               Profile
             </MenuItem>
+
             <MenuItem onClick={() => navigate('/dashboard/company-edit')}>
               <Settings sx={{ mr: 2 }} />
               Settings
             </MenuItem>
+
             <Divider />
+
             <MenuItem onClick={handleLogout}>
               <Logout sx={{ mr: 2 }} />
               Logout

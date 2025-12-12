@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box } from '@mui/material';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Overview from '../components/dashboard/Overview';
 import ProfileEdit from '../components/dashboard/ProfileEdit';
@@ -12,9 +11,9 @@ import { fetchCompanyProfile } from '../store/slices/companySlice';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
+    // Fetch fresh user and company data on mount
     dispatch(fetchUserProfile());
     dispatch(fetchCompanyProfile());
   }, [dispatch]);
@@ -25,9 +24,8 @@ const Dashboard = () => {
         <Route path="/" element={<Overview />} />
         <Route path="/profile-edit" element={<ProfileEdit />} />
         <Route path="/company-edit" element={<CompanyEdit />} />
-        {(!user?.is_email_verified || !user?.is_mobile_verified) && (
-          <Route path="/verification" element={<VerificationTab />} />
-        )}
+        {/* ✅ FIX: Always show verification route - component handles visibility */}
+        <Route path="/verification" element={<VerificationTab />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </DashboardLayout>

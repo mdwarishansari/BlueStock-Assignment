@@ -221,14 +221,55 @@ const authController = {
   // ======================================================
   // PROFILE
   // ======================================================
+  // PROFILE
   getProfile: async (req, res, next) => {
     try {
-      const user = await userModel.getUserWithCompany(req.user.id);
-      if (!user) throw createError(404, "User not found");
+      const row = await userModel.getUserWithCompany(req.user.id);
+      if (!row) throw createError(404, "User not found");
+
+      // Build user object (map aliased created_at fields)
+      const user = {
+        id: row.id,
+        email: row.email,
+        full_name: row.full_name,
+        gender: row.gender,
+        mobile_no: row.mobile_no,
+        signup_type: row.signup_type,
+        is_email_verified: row.is_email_verified,
+        is_mobile_verified: row.is_mobile_verified,
+        created_at: row.user_created_at,
+        updated_at: row.user_updated_at,
+      };
+
+      // Build company object if exists
+      let company = null;
+      if (row.company_id) {
+        company = {
+          id: row.company_id,
+          company_name: row.company_name,
+          address: row.address,
+          city: row.city,
+          state: row.state,
+          country: row.country,
+          postal_code: row.postal_code,
+          website: row.website,
+          logo_url: row.logo_url,
+          banner_url: row.banner_url,
+          industry: row.industry,
+          founded_date: row.founded_date,
+          description: row.description,
+          social_links: row.social_links,
+          created_at: row.company_created_at,
+          updated_at: row.company_updated_at,
+        };
+      }
 
       res.status(200).json({
         success: true,
-        data: user,
+        data: {
+          user,
+          company,
+        },
       });
     } catch (error) {
       next(error);

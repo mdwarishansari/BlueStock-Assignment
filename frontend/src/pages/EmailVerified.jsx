@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Box, Card, Typography, Button, CircularProgress } from '@mui/material';
-import { CheckCircle, Error } from '@mui/icons-material';
-import axios from 'axios';
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Box, Card, Typography, Button, CircularProgress } from "@mui/material";
+import { CheckCircle, Error } from "@mui/icons-material";
+import axios from "axios";
+import { useDispatch } from "react-redux";
+import { markEmailVerified, fetchUserProfile } from "../store/slices/authSlice";
 
 const EmailVerified = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
 
-  const [status, setStatus] = useState("verifying"); // verifying | success | error
+  const [status, setStatus] = useState("verifying");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -16,63 +19,41 @@ const EmailVerified = () => {
     const urlStatus = searchParams.get("status");
     const urlMsg = searchParams.get("msg");
 
-    // Backend redirected success
-if (urlStatus === "success") {
-  setStatus("success");
-  setMessage("Email verified successfully!");
+    // CASE 1: Backend redirect success
+    if (urlStatus === "success") {
+      setStatus("success");
+      setMessage("Email verified successfully!");
 
-  // remove token so axios won't run
-  window.history.replaceState({}, "", "/verify-email?status=success");
-  return;
-}
+      // update redux
+      dispatch(markEmailVerified());
+      dispatch(fetchUserProfile());
 
-// Backend redirected error
-if (urlStatus === "error") {
-  setStatus("error");
-  setMessage(decodeURIComponent(urlMsg || "Verification failed"));
+      window.history.replaceState({}, "", "/verify-email?status=success");
+      return;
+    }
 
-  window.history.replaceState({}, "", "/verify-email?status=error");
-  return;
-}
+    // CASE 2: Backend redirect error
+    if (urlStatus === "error") {
+      setStatus("error");
+      setMessage(decodeURIComponent(urlMsg || "Verification failed"));
 
+      window.history.replaceState({}, "", "/verify-email?status=error");
+      return;
+    }
 
-    // CASE 3: No status & no token → invalid link
+    // CASE 3: No token → invalid link
     if (!token) {
       setStatus("error");
       setMessage("Invalid verification link");
       return;
     }
 
-    // CASE 4: Direct token verification
+    // CASE 4: Direct token verification → let backend redirect
     if (token) {
-  // Let the backend redirect naturally
-  window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/verify-email?token=${token}`;
-  return;
-}
-
-  }, [searchParams]);
-
-  // ---------------------------------------------
-  // FUNCTION: verifies token only when needed
-  // ---------------------------------------------
-  const verifyWithToken = async (token) => {
-    try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/verify-email?token=${token}`
-      );
-
-      if (res.data.success) {
-        setStatus("success");
-        setMessage(res.data.message || "Email verified successfully!");
-      }
-    } catch (err) {
-      setStatus("error");
-      setMessage(
-        err.response?.data?.message ||
-        "Verification failed. Token may be invalid or expired."
-      );
+      window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/verify-email?token=${token}`;
+      return;
     }
-  };
+  }, [searchParams, dispatch]);
 
   return (
     <Box
@@ -119,13 +100,21 @@ if (urlStatus === "error") {
             >
               <CheckCircle sx={{ fontSize: 50, color: "success.main" }} />
             </Box>
+
             <Typography variant="h5" fontWeight="bold" gutterBottom>
               ✅ Email Verified!
             </Typography>
+
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
               {message}
             </Typography>
-            <Button variant="contained" size="large" onClick={() => navigate("/login")} fullWidth>
+
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate("/login")}
+              fullWidth
+            >
               Go to Login
             </Button>
           </>
@@ -147,13 +136,21 @@ if (urlStatus === "error") {
             >
               <Error sx={{ fontSize: 50, color: "error.main" }} />
             </Box>
+
             <Typography variant="h5" fontWeight="bold" gutterBottom>
               ❌ Verification Failed
             </Typography>
+
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
               {message}
             </Typography>
-            <Button variant="contained" size="large" onClick={() => navigate("/login")} fullWidth>
+
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate("/login")}
+              fullWidth
+            >
               Go to Login
             </Button>
           </>

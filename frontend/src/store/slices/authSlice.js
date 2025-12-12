@@ -65,6 +65,16 @@ export const updateUserProfile = createAsyncThunk(
     }
   }
 );
+export const markEmailVerified = createAsyncThunk(
+  "auth/markEmailVerified",
+  async (_, { rejectWithValue }) => {
+    try {
+      return { success: true }; // dummy response
+    } catch (error) {
+      return rejectWithValue(error);
+    }
+  }
+);
 
 // -----------------------------
 // Initial State
@@ -126,6 +136,9 @@ const authSlice = createSlice({
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(markEmailVerified.fulfilled, (state) => {
+        if (state.user) state.user.is_email_verified = true;
       });
 
     // -----------------------------
@@ -188,13 +201,20 @@ const authSlice = createSlice({
       .addCase(fetchUserProfile.fulfilled, (state, action) => {
         state.loading = false;
 
+        const backendUser = action.payload.data.user;
+        const backendCompany = action.payload.data.company;
+
         state.user = {
-          ...action.payload.data.user,
-          hasCompany: !!action.payload.data.company, // ensure boolean
+          ...backendUser,
+          hasCompany:
+            backendUser.hasCompany !== undefined
+              ? backendUser.hasCompany
+              : !!backendCompany,
         };
 
         localStorage.setItem("user", JSON.stringify(state.user));
       })
+
       .addCase(fetchUserProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;

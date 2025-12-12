@@ -1,4 +1,4 @@
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Drawer,
@@ -10,35 +10,36 @@ import {
   Box,
   Typography,
   Divider,
+  Badge,
 } from '@mui/material';
 import {
-  Dashboard,
+  Dashboard as DashboardIcon,
   Person,
   Business,
   VerifiedUser,
-  Logout,
-  Work,
+  ExitToApp,
 } from '@mui/icons-material';
 import { logout } from '../../store/slices/authSlice';
-import { useDispatch } from 'react-redux';
 
-const Sidebar = ({ open, onClose, isMobile }) => {
+const drawerWidth = 280;
+
+const Sidebar = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const location = useLocation();
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
 
-  // Show verification tab only if email or mobile is not verified
-  const showVerificationTab = !user?.is_email_verified || !user?.is_mobile_verified;
+  // ✅ FIX: Check if user needs verification
+  const needsVerification = !user?.is_email_verified || !user?.is_mobile_verified;
 
   const menuItems = [
-    { text: 'Overview', icon: <Dashboard />, path: '/dashboard' },
+    { text: 'Overview', icon: <DashboardIcon />, path: '/dashboard' },
     { text: 'Profile Settings', icon: <Person />, path: '/dashboard/profile-edit' },
     { text: 'Company Settings', icon: <Business />, path: '/dashboard/company-edit' },
   ];
 
-  // Add verification tab conditionally
-  if (showVerificationTab) {
+  // ✅ FIX: Only add verification item if needed
+  if (needsVerification) {
     menuItems.push({
       text: 'Verification',
       icon: <VerifiedUser />,
@@ -47,83 +48,83 @@ const Sidebar = ({ open, onClose, isMobile }) => {
     });
   }
 
-  const handleNavigation = (path) => {
-    navigate(path);
-    if (isMobile) {
-      onClose();
-    }
-  };
-
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
   };
 
-  const drawerContent = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Logo */}
-      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Work sx={{ color: 'primary.main', fontSize: 32 }} />
-        <Typography variant="h6" fontWeight="bold" color="primary">
-          Jobpilot
+  return (
+    <Drawer
+      variant="permanent"
+      sx={{
+        width: drawerWidth,
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
+          width: drawerWidth,
+          boxSizing: 'border-box',
+          backgroundColor: 'background.paper',
+          borderRight: '1px solid',
+          borderColor: 'divider',
+        },
+      }}
+    >
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h5" fontWeight="bold" color="primary">
+          🧳 Jobpilot
         </Typography>
       </Box>
 
       <Divider />
 
-      {/* Menu Items */}
-      <List sx={{ flexGrow: 1, px: 2 }}>
-        <Typography variant="caption" color="text.secondary" sx={{ px: 2, py: 1, display: 'block' }}>
+      <Box sx={{ p: 2 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ px: 2, fontWeight: 600 }}
+        >
           EMPLOYERS DASHBOARD
         </Typography>
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                onClick={() => handleNavigation(item.path)}
-                sx={{
-                  borderRadius: 2,
-                  bgcolor: isActive ? 'primary.main' : 'transparent',
-                  color: isActive ? 'white' : 'text.primary',
+      </Box>
+
+      <List sx={{ px: 2 }}>
+        {menuItems.map((item) => (
+          <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
+            <ListItemButton
+              onClick={() => navigate(item.path)}
+              selected={location.pathname === item.path}
+              sx={{
+                borderRadius: 2,
+                '&.Mui-selected': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
                   '&:hover': {
-                    bgcolor: isActive ? 'primary.dark' : 'action.hover',
+                    backgroundColor: 'primary.dark',
                   },
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    color: isActive ? 'white' : 'text.secondary',
-                    minWidth: 40,
-                  }}
-                >
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  primaryTypographyProps={{
-                    fontWeight: isActive ? 600 : 400,
-                  }}
-                />
-                {item.badge && (
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: 'error.main',
-                    }}
-                  />
+                  '& .MuiListItemIcon-root': {
+                    color: 'white',
+                  },
+                },
+              }}
+            >
+              <ListItemIcon>
+                {item.badge ? (
+                  <Badge color="error" variant="dot">
+                    {item.icon}
+                  </Badge>
+                ) : (
+                  item.icon
                 )}
-              </ListItemButton>
-            </ListItem>
-          );
-        })}
+              </ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
       </List>
+
+      <Box sx={{ flexGrow: 1 }} />
 
       <Divider />
 
-      {/* Logout */}
       <List sx={{ px: 2, pb: 2 }}>
         <ListItem disablePadding>
           <ListItemButton
@@ -132,47 +133,18 @@ const Sidebar = ({ open, onClose, isMobile }) => {
               borderRadius: 2,
               color: 'error.main',
               '&:hover': {
-                bgcolor: 'error.light',
-                color: 'error.dark',
+                backgroundColor: 'error.lighter',
               },
             }}
           >
-            <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
-              <Logout />
+            <ListItemIcon>
+              <ExitToApp sx={{ color: 'error.main' }} />
             </ListItemIcon>
             <ListItemText primary="Log-out" />
           </ListItemButton>
         </ListItem>
       </List>
-    </Box>
-  );
-
-  return (
-    <>
-      {isMobile ? (
-        <Drawer anchor="left" open={open} onClose={onClose}>
-          <Box sx={{ width: 280 }}>{drawerContent}</Box>
-        </Drawer>
-      ) : (
-        <Drawer
-          variant="persistent"
-          anchor="left"
-          open={open}
-          sx={{
-            width: 280,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: 280,
-              boxSizing: 'border-box',
-              borderRight: '1px solid',
-              borderColor: 'divider',
-            },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-      )}
-    </>
+    </Drawer>
   );
 };
 
