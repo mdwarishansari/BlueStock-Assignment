@@ -9,7 +9,7 @@ import Dashboard from './pages/Dashboard';
 import CompanySetup from './pages/CompanySetup';
 import NotFound from './pages/NotFound';
 import ForgotPassword from './pages/ForgotPassword';
-import EmailVerified from './pages/EmailVerified'; // ✅ NEW
+import EmailVerified from './pages/EmailVerified';
 
 // Utils
 import { setUser } from './store/slices/authSlice';
